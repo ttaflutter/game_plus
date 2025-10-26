@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:game_plus/models/user_model.dart';
 import 'package:game_plus/ui/screens/caro/caro_playing_screen.dart';
 import 'package:game_plus/ui/screens/caro/caro_matching_screen.dart';
-import 'package:game_plus/ui/screens/caro/widgets/custom_bottom_nav.dart';
+import 'package:game_plus/ui/widgets/custom_bottom_nav.dart';
 import 'package:provider/provider.dart';
 import 'package:game_plus/game/caro/caro_controller.dart';
 import 'package:game_plus/services/auth_service.dart';
@@ -14,14 +14,39 @@ class CaroHomeScreen extends StatefulWidget {
   State<CaroHomeScreen> createState() => _CaroHomeScreenState();
 }
 
-class _CaroHomeScreenState extends State<CaroHomeScreen> {
+class _CaroHomeScreenState extends State<CaroHomeScreen>
+    with SingleTickerProviderStateMixin {
   bool _loading = false;
-  UserModel? _currentUser; // Cache user data
+  UserModel? _currentUser;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserData() async {
@@ -33,9 +58,13 @@ class _CaroHomeScreenState extends State<CaroHomeScreen> {
         setState(() {
           _currentUser = user;
         });
+        _animationController.forward();
       }
     } catch (e) {
       print("❌ Error loading user: $e");
+      if (mounted) {
+        _animationController.forward();
+      }
     }
   }
 
@@ -44,42 +73,37 @@ class _CaroHomeScreenState extends State<CaroHomeScreen> {
     try {
       final token = await AuthService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Vui lòng đăng nhập trước.")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Vui lòng đăng nhập trước.")),
+          );
+        }
         setState(() => _loading = false);
         return;
       }
 
-      // Sử dụng cached user hoặc fetch lại nếu chưa có
       UserModel currentUser =
           _currentUser ?? await AuthService().getCurrentUser();
       print(
         "👤 Current user: ${currentUser.username} (ID: ${currentUser.id}, Rating: ${currentUser.rating})",
       );
 
-      // Show matching screen với thông tin thật
       if (!mounted) return;
-      final result = await Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => CaroMatchingScreen(
             myUsername: currentUser.username,
             myAvatar: currentUser.avatarUrl,
-            myRating:
-                currentUser.rating ??
-                1200, // Lấy rating thật từ user hoặc default 1200
-            // Callback khi tìm thấy đối thủ - navigate to game
+            myRating: currentUser.rating ?? 1200,
             onMatchFound: (matchId, myRating, opponentRating) {
               print(
                 "🎮 Navigating to game with match ID: $matchId, My Rating: $myRating, Opponent Rating: $opponentRating",
               );
               if (!mounted) return;
 
-              // Pop matching screen
               Navigator.pop(context);
 
-              // Navigate to game screen với ratings
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -97,9 +121,6 @@ class _CaroHomeScreenState extends State<CaroHomeScreen> {
           ),
         ),
       );
-
-      // User quay lại (cancel matching) - đảm bảo reset loading
-      print("📱 Returned from matching screen. Result: $result");
     } catch (e) {
       print("❌ Error in _handlePlayNow: $e");
       if (mounted) {
@@ -115,114 +136,57 @@ class _CaroHomeScreenState extends State<CaroHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey.shade50,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header with user info
-            _buildHeader(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final screenHeight = constraints.maxHeight;
+            final isTablet = screenWidth > 600;
+            final isDesktop = screenWidth > 900;
 
-            // Main content
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildMainContent(),
-            ),
-          ],
+            return Column(
+              children: [
+                _buildModernHeader(screenWidth, isTablet),
+                Expanded(
+                  child: _loading
+                      ? _buildLoadingState(isTablet)
+                      : _buildMainContent(
+                          screenWidth,
+                          screenHeight,
+                          isTablet,
+                          isDesktop,
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
-      // Bottom navigation bar
-      bottomNavigationBar: CustomBottomNav(currentIndex: 2),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
     );
   }
 
-  Widget _buildHeader() {
-    // Sử dụng cached user data thay vì FutureBuilder
-    final username = _currentUser?.username ?? 'Player';
-    final avatarUrl = _currentUser?.avatarUrl;
-    final elo = _currentUser?.rating ?? 1000; // Lấy rating thật từ cached user
-
-    print("📊 Header - Username: $username, Rating: $elo"); // Debug log
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
+  Widget _buildLoadingState(bool isTablet) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Avatar
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.orange, width: 3),
-            ),
-            child: ClipOval(
-              child: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? Image.network(
-                      avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        );
-                      },
-                    )
-                  : Container(
-                      color: Colors.grey.shade300,
-                      child: const Icon(Icons.person, color: Colors.grey),
-                    ),
+          SizedBox(
+            width: isTablet ? 80 : 60,
+            height: isTablet ? 80 : 60,
+            child: CircularProgressIndicator(
+              strokeWidth: isTablet ? 6 : 4,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
             ),
           ),
-          const SizedBox(width: 12),
-          // Username and ELO
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  username.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      'ELO: ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '$elo',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: (elo % 100) / 100,
-                    backgroundColor: Colors.grey.shade300,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.blue,
-                    ),
-                    minHeight: 8,
-                  ),
-                ),
-              ],
+          SizedBox(height: isTablet ? 32 : 24),
+          Text(
+            'Đang tải...',
+            style: TextStyle(
+              fontSize: isTablet ? 20 : 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
             ),
           ),
         ],
@@ -230,172 +194,425 @@ class _CaroHomeScreenState extends State<CaroHomeScreen> {
     );
   }
 
-  Widget _buildMainContent() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Spacer(),
-        // Logo shield
-        Image.asset("assets/images/logo_caro.png", width: 250),
-        const SizedBox(height: 60),
-        // Buttons
-        _buildPlayButton(text: 'CHƠI NGAY', onPressed: _handlePlayNow),
-        const SizedBox(height: 16),
-        _buildPlayButton(
-          text: 'CHƠI VỚI BẠN',
-          onPressed: () {
-            // TODO: Implement play with friend
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tính năng đang phát triển')),
-            );
-          },
-        ),
-        const Spacer(),
-      ],
-    );
-  }
+  Widget _buildModernHeader(double screenWidth, bool isTablet) {
+    final username = _currentUser?.username ?? 'Player';
+    final avatarUrl = _currentUser?.avatarUrl;
+    final elo = _currentUser?.rating ?? 1000;
+    final maxWidth = isTablet ? 800.0 : screenWidth;
 
-  Widget _buildLogoShield() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Shield background
-        Container(
-          width: 200,
-          height: 220,
-          child: CustomPaint(painter: ShieldPainter()),
-        ),
-        // Content
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Ribbon text
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade700,
-                borderRadius: BorderRadius.circular(4),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Text(
-                'CỜ CARO',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            // X O O X pattern
-            const Text(
-              'X O\nO X',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                height: 1.0,
-                letterSpacing: 8,
-              ),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isTablet ? 24 : 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade600, Colors.blue.shade800],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.shade600.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildPlayButton({
-    required String text,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: 280,
-      height: 60,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade600,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          elevation: 4,
-          shadowColor: Colors.blue.withOpacity(0.5),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
+        child: Center(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Row(
+              children: [
+                // Avatar with glow effect
+                Container(
+                  width: isTablet ? 70 : 56,
+                  height: isTablet ? 70 : 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.5),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.amber, width: 3),
+                    ),
+                    child: ClipOval(
+                      child: avatarUrl != null && avatarUrl.isNotEmpty
+                          ? Image.network(
+                              avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildDefaultAvatar(isTablet);
+                              },
+                            )
+                          : _buildDefaultAvatar(isTablet),
+                    ),
+                  ),
+                ),
+                SizedBox(width: isTablet ? 20 : 16),
+                // User info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        username.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: isTablet ? 22 : 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: isTablet ? 8 : 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isTablet ? 12 : 10,
+                              vertical: isTablet ? 6 : 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.amber.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  color: Colors.white,
+                                  size: isTablet ? 18 : 16,
+                                ),
+                                SizedBox(width: isTablet ? 6 : 4),
+                                Text(
+                                  '$elo',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 16 : 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isTablet ? 10 : 8),
+                      // Progress bar with animation
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          height: isTablet ? 10 : 8,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: (elo % 100) / 100,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Colors.amber, Colors.orange],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.amber.withOpacity(0.5),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-/// Custom painter for the shield shape background
-class ShieldPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = LinearGradient(
-        colors: [Colors.blue.shade600, Colors.blue.shade700],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-
-    // Start from top center
-    path.moveTo(size.width / 2, 0);
-
-    // Top left curve
-    path.lineTo(0, size.height * 0.15);
-
-    // Left side
-    path.lineTo(0, size.height * 0.6);
-
-    // Bottom curve (shield point)
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height,
-      size.width,
-      size.height * 0.6,
+  Widget _buildDefaultAvatar(bool isTablet) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.blue.shade400, Colors.blue.shade700],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.person,
+          color: Colors.white,
+          size: isTablet ? 36 : 28,
+        ),
+      ),
     );
-
-    // Right side
-    path.lineTo(size.width, size.height * 0.15);
-
-    // Top right curve
-    path.lineTo(size.width / 2, 0);
-
-    path.close();
-
-    // Draw shadow
-    canvas.drawShadow(path, Colors.black.withOpacity(0.3), 8, true);
-
-    // Draw shield
-    canvas.drawPath(path, paint);
-
-    // Draw border
-    final borderPaint = Paint()
-      ..color = Colors.blue.shade800
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawPath(path, borderPaint);
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget _buildMainContent(
+    double screenWidth,
+    double screenHeight,
+    bool isTablet,
+    bool isDesktop,
+  ) {
+    final maxWidth = isDesktop ? 600.0 : (isTablet ? 500.0 : screenWidth);
+    final logoSize = isDesktop ? 280.0 : (isTablet ? 240.0 : 200.0);
+
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Container(
+            constraints: BoxConstraints(minHeight: screenHeight - 200),
+            child: Center(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 32 : 20,
+                  vertical: isTablet ? 48 : 32,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo with hero animation
+                    Hero(
+                      tag: 'caro_logo',
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxWidth: logoSize,
+                          maxHeight: logoSize,
+                        ),
+                        child: Image.asset(
+                          "assets/images/logo_caro.png",
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 50 : 25),
+
+                    // Title with gradient
+                    Text(
+                      'Kết nối – Đấu trí – Chiến thắng!',
+                      style: TextStyle(
+                        fontSize: isTablet ? 20 : 18,
+                        color: const Color.fromARGB(255, 87, 86, 86),
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 56 : 40),
+                    // Action buttons
+                    _buildModernButton(
+                      text: 'CHƠI NGAY',
+                      icon: Icons.play_arrow_rounded,
+                      onPressed: _handlePlayNow,
+                      isPrimary: true,
+                      isTablet: isTablet,
+                    ),
+                    SizedBox(height: isTablet ? 20 : 16),
+                    _buildModernButton(
+                      text: 'CHƠI VỚI BẠN',
+                      icon: Icons.people_rounded,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 12),
+                                Text('Tính năng đang phát triển'),
+                              ],
+                            ),
+                            backgroundColor: Colors.blue.shade600,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
+                      isPrimary: false,
+                      isTablet: isTablet,
+                    ),
+                    SizedBox(height: isTablet ? 40 : 24),
+                    // Stats or info cards
+                    _buildInfoCards(isTablet),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernButton({
+    required String text,
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isPrimary,
+    required bool isTablet,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: isTablet ? 64 : 56,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor: isPrimary ? Colors.blue.shade600 : Colors.white,
+              foregroundColor: isPrimary ? Colors.white : Colors.blue.shade600,
+              elevation: isPrimary ? 8 : 2,
+              shadowColor: isPrimary
+                  ? Colors.blue.shade600.withOpacity(0.5)
+                  : Colors.grey.withOpacity(0.2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(isTablet ? 16 : 14),
+                side: isPrimary
+                    ? BorderSide.none
+                    : BorderSide(color: Colors.blue.shade600, width: 2),
+              ),
+            ).copyWith(
+              overlayColor: WidgetStateProperty.resolveWith<Color?>((
+                Set<WidgetState> states,
+              ) {
+                if (states.contains(WidgetState.pressed)) {
+                  return isPrimary
+                      ? Colors.white.withOpacity(0.2)
+                      : Colors.blue.shade600.withOpacity(0.1);
+                }
+                return null;
+              }),
+            ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: isTablet ? 28 : 24),
+            SizedBox(width: isTablet ? 12 : 10),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: isTablet ? 18 : 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCards(bool isTablet) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildInfoCard(
+            icon: Icons.emoji_events_rounded,
+            title: 'Xếp hạng',
+            subtitle: 'Thử thách',
+            color: Colors.amber,
+            isTablet: isTablet,
+          ),
+        ),
+        SizedBox(width: isTablet ? 16 : 12),
+        Expanded(
+          child: _buildInfoCard(
+            icon: Icons.people_outline_rounded,
+            title: 'Bạn bè',
+            subtitle: 'Đối đầu',
+            color: Colors.green,
+            isTablet: isTablet,
+          ),
+        ),
+        SizedBox(width: isTablet ? 16 : 12),
+        Expanded(
+          child: _buildInfoCard(
+            icon: Icons.history_rounded,
+            title: 'Lịch sử',
+            subtitle: 'Xem lại',
+            color: Colors.purple,
+            isTablet: isTablet,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isTablet,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 16 : 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: isTablet ? 32 : 28),
+          SizedBox(height: isTablet ? 10 : 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: isTablet ? 14 : 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade800,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: isTablet ? 4 : 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: isTablet ? 11 : 10,
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
 }

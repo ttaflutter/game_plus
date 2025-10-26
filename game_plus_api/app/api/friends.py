@@ -118,19 +118,24 @@ async def send_friend_request(
     if not receiver:
         raise HTTPException(404, "User not found")
     
-    if receiver.id == current_user.id:
+    # Store receiver info early to avoid detached instance issues
+    receiver_id = receiver.id
+    receiver_username = receiver.username
+    receiver_avatar_url = receiver.avatar_url
+    
+    if receiver_id == current_user.id:
         raise HTTPException(400, "Cannot send friend request to yourself")
     
     # Kiểm tra đã là bạn chưa
-    if await check_friendship(db, current_user.id, receiver.id):
+    if await check_friendship(db, current_user.id, receiver_id):
         raise HTTPException(400, "Already friends")
     
     # Kiểm tra đã có request pending chưa (cả 2 chiều)
     existing = await db.scalar(
         select(FriendRequest).where(
             or_(
-                and_(FriendRequest.sender_id == current_user.id, FriendRequest.receiver_id == receiver.id),
-                and_(FriendRequest.sender_id == receiver.id, FriendRequest.receiver_id == current_user.id)
+                and_(FriendRequest.sender_id == current_user.id, FriendRequest.receiver_id == receiver_id),
+                and_(FriendRequest.sender_id == receiver_id, FriendRequest.receiver_id == current_user.id)
             ),
             FriendRequest.status == FriendRequestStatus.pending
         )
@@ -142,7 +147,7 @@ async def send_friend_request(
     old_request = await db.scalar(
         select(FriendRequest).where(
             FriendRequest.sender_id == current_user.id,
-            FriendRequest.receiver_id == receiver.id,
+            FriendRequest.receiver_id == receiver_id,
             FriendRequest.status.in_([FriendRequestStatus.rejected, FriendRequestStatus.accepted])
         )
     )
@@ -153,7 +158,7 @@ async def send_friend_request(
     # Tạo friend request
     friend_request = FriendRequest(
         sender_id=current_user.id,
-        receiver_id=receiver.id,
+        receiver_id=receiver_id,
         status=FriendRequestStatus.pending
     )
     db.add(friend_request)
@@ -163,13 +168,13 @@ async def send_friend_request(
     return FriendRequestResponse(
         id=friend_request.id,
         sender_id=current_user.id,
-        receiver_id=receiver.id,
+        receiver_id=receiver_id,
         status=friend_request.status.value,
         created_at=friend_request.created_at,
         sender_username=current_user.username,
         sender_avatar_url=current_user.avatar_url,
-        receiver_username=receiver.username,
-        receiver_avatar_url=receiver.avatar_url
+        receiver_username=receiver_username,
+        receiver_avatar_url=receiver_avatar_url
     )
 
 @router.get("/requests/received", response_model=List[FriendRequestResponse])
@@ -374,22 +379,105 @@ async def remove_friend(
     db: AsyncSession = Depends(get_db)
 ):
     """Hủy kết bạn."""
+    # Add logging for debugging
+    print(f"DEBUG: User {current_user.id} ({current_user.username}) trying to unfriend user {friend_id}")
+    
     if friend_id == current_user.id:
-        raise HTTPException(400, "Cannot unfriend yourself")
+        print(f"ERROR: User {current_user.id} trying to unfriend themselves")
+        raise HTTPException(400, f"Cannot unfriend yourself (your user_id: {current_user.id}, friend_id requested: {friend_id}). Make sure you're passing the friend's user ID, not the friendship ID.")
+    
+    # Verify the friend exists
+    friend_user = await db.scalar(select(User).where(User.id == friend_id))
+    if not friend_user:
+        print(f"ERROR: User {friend_id} does not exist")
+        raise HTTPException(404, f"User with ID {friend_id} not found")
     
     # Tìm friendship
     u1, u2 = normalize_friendship(current_user.id, friend_id)
+    print(f"DEBUG: Looking for friendship between {u1} and {u2}")
     friendship = await db.scalar(
         select(Friend).where(Friend.user1_id == u1, Friend.user2_id == u2)
     )
     
     if not friendship:
-        raise HTTPException(404, "Friendship not found")
+        print(f"ERROR: No friendship found between users {current_user.id} and {friend_id}")
+        raise HTTPException(404, f"Friendship not found between {current_user.username} (ID: {current_user.id}) and {friend_user.username} (ID: {friend_id}). Make sure you are friends with this user.")
     
+    print(f"SUCCESS: Deleting friendship {friendship.id} between users {u1} and {u2}")
     await db.delete(friendship)
     await db.commit()
     
-    return {"message": "Friend removed"}
+    return {"message": f"Friend {friend_user.username} (ID: {friend_id}) removed successfully"}
+
+@router.delete("/friendship/{friendship_id}")
+async def remove_friend_by_friendship_id(
+    friendship_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Hủy kết bạn bằng friendship ID (alternative endpoint)."""
+    print(f"DEBUG: User {current_user.id} ({current_user.username}) trying to remove friendship {friendship_id}")
+    
+    # Tìm friendship
+    friendship = await db.scalar(select(Friend).where(Friend.id == friendship_id))
+    if not friendship:
+        print(f"ERROR: Friendship {friendship_id} not found")
+        raise HTTPException(404, f"Friendship with ID {friendship_id} not found")
+    
+    # Kiểm tra user có quyền xóa friendship này không
+    if current_user.id != friendship.user1_id and current_user.id != friendship.user2_id:
+        print(f"ERROR: User {current_user.id} not authorized to delete friendship {friendship_id}")
+        raise HTTPException(403, f"You are not authorized to remove this friendship")
+    
+    # Get friend info for response BEFORE deleting friendship
+    friend_id = friendship.user2_id if friendship.user1_id == current_user.id else friendship.user1_id
+    friend_user = await db.scalar(select(User).where(User.id == friend_id))
+    
+    # Store friend info early to avoid detached instance issues
+    friend_username = friend_user.username if friend_user else "Unknown User"
+    
+    print(f"SUCCESS: Deleting friendship {friendship.id} between users {friendship.user1_id} and {friendship.user2_id}")
+    await db.delete(friendship)
+    await db.commit()
+    
+    return {"message": f"Friendship removed successfully. You are no longer friends with {friend_username}"}
+
+@router.get("/debug/my-friendships")
+async def debug_my_friendships(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Debug endpoint to show current user's friendships with detailed info."""
+    friendships = await db.execute(
+        select(Friend).where(
+            or_(Friend.user1_id == current_user.id, Friend.user2_id == current_user.id)
+        ).order_by(Friend.created_at.desc())
+    )
+    friendships = friendships.scalars().all()
+    
+    result = []
+    for friendship in friendships:
+        friend_id = friendship.user2_id if friendship.user1_id == current_user.id else friendship.user1_id
+        friend_user = await db.scalar(select(User).where(User.id == friend_id))
+        
+        result.append({
+            "friendship_id": friendship.id,
+            "friend_user_id": friend_id,
+            "friend_username": friend_user.username if friend_user else "Unknown",
+            "user1_id": friendship.user1_id,
+            "user2_id": friendship.user2_id,
+            "created_at": friendship.created_at,
+            "to_unfriend_use_endpoint": f"DELETE /api/friends/{friend_id}",
+            "or_use_friendship_endpoint": f"DELETE /api/friends/friendship/{friendship.id}"
+        })
+    
+    return {
+        "current_user": {
+            "id": current_user.id,
+            "username": current_user.username
+        },
+        "friendships": result
+    }
 
 # ==== Challenge System ====
 

@@ -394,7 +394,7 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
                               ),
                               Flexible(
                                 child: Text(
-                                  'SĂN SĂNG',
+                                  'SẴN SÀNG CHƠI',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: headerFontSize,

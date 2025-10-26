@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:game_plus/ui/screens/caro/caro_playing_screen.dart';
 import 'package:game_plus/ui/screens/caro/caro_matching_screen.dart';
 import 'package:game_plus/ui/screens/auth/login_screen.dart';
-import 'package:game_plus/ui/screens/caro/widgets/custom_bottom_nav.dart';
+import 'package:game_plus/ui/widgets/custom_bottom_nav.dart';
 import 'package:game_plus/ui/screens/friends/friends_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:game_plus/game/caro/caro_controller.dart';
@@ -153,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
       ),
-      
     );
   }
 }

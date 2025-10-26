@@ -171,7 +171,7 @@ class FriendService {
     final token = await AuthService.getToken();
     if (token == null) throw Exception("Not authenticated");
 
-    final url = Uri.parse('$baseUrl/api/friends/$friendId');
+    final url = Uri.parse('$baseUrl/api/friends/friendship/$friendId');
     final response = await http.delete(
       url,
       headers: {

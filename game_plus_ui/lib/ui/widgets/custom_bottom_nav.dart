@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:game_plus/ui/screens/profile/profile_screen.dart';
 import 'package:game_plus/ui/screens/caro/caro_home_screen.dart';
-import 'package:game_plus/ui/screens/caro/widgets/page_transition.dart';
+import 'package:game_plus/ui/screens/leaderboard/leaderboard_screen.dart';
+import 'package:game_plus/ui/widgets/page_transition.dart';
 import 'package:game_plus/ui/screens/friends/friends_screen.dart';
+import 'package:game_plus/ui/screens/history/match_history_screen.dart';
 
 class CustomBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -18,12 +21,12 @@ class CustomBottomNav extends StatelessWidget {
         onTap: () {
           Navigator.pushReplacement(
             context,
-            pageTransition(const CaroHomeScreen()),
+            pageTransition(const LeaderboardScreen()),
           );
         },
       ),
       _NavItem(
-        icon: Icons.shopping_cart,
+        icon: Icons.people,
         label: "Bàn Bè",
         isActive: currentIndex == 1,
         onTap: () {
@@ -45,24 +48,24 @@ class CustomBottomNav extends StatelessWidget {
         },
       ),
       _NavItem(
-        icon: Icons.extension,
+        icon: Icons.history,
         label: "Lịch Sử",
         isActive: currentIndex == 3,
         onTap: () {
           Navigator.pushReplacement(
             context,
-            pageTransition(const CaroHomeScreen()),
+            pageTransition(const MatchHistoryScreen()),
           );
         },
       ),
       _NavItem(
-        icon: Icons.settings,
+        icon: Icons.person,
         label: "Cá Nhân",
         isActive: currentIndex == 4,
         onTap: () {
           Navigator.pushReplacement(
             context,
-            pageTransition(const CaroHomeScreen()),
+            pageTransition(const ProfileScreen()),
           );
         },
       ),
@@ -126,15 +129,15 @@ class _NavItem extends StatelessWidget {
               scale: isActive ? 1.2 : 1.0,
               child: Icon(
                 icon,
-                size: 26,
+                size: 22,
                 color: isActive ? Colors.blue.shade600 : Colors.grey.shade400,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 color: isActive ? Colors.blue.shade600 : Colors.grey.shade400,
               ),

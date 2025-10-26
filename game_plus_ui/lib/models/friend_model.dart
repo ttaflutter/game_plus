@@ -1,6 +1,7 @@
 /// Model cho User trong search results và friends list
 class FriendUser {
-  final int id;
+  final int id; // User ID
+  final int? friendshipId; // Friendship ID (for removing friend)
   final String username;
   final String? avatarUrl;
   final int rating;
@@ -11,6 +12,7 @@ class FriendUser {
 
   FriendUser({
     required this.id,
+    this.friendshipId,
     required this.username,
     this.avatarUrl,
     required this.rating,
@@ -22,7 +24,9 @@ class FriendUser {
 
   factory FriendUser.fromJson(Map<String, dynamic> json) {
     return FriendUser(
-      id: json['id'] ?? json['user_id'],
+      id: json['user_id'] ?? json['id'], // Prioritize user_id over id
+      friendshipId:
+          json['friendship_id'] ?? json['id'], // Friendship ID for removal
       username: json['username'],
       avatarUrl: json['avatar_url'],
       rating: json['rating'] ?? 1000,

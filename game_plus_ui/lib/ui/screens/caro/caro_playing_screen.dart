@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:game_plus/ui/widgets/caro/caro_chat_overlay.dart';
+import 'package:game_plus/ui/widgets/caro/caro_rematch_dialog.dart';
+import 'package:game_plus/ui/widgets/caro/caro_surrender_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:game_plus/game/caro/caro_controller.dart';
 import 'package:game_plus/game/caro/caro_board.dart';
-import 'package:game_plus/ui/screens/caro/widgets/caro_rematch_dialog.dart';
-import 'package:game_plus/ui/screens/caro/widgets/caro_surrender_dialog.dart';
-import 'package:game_plus/ui/screens/caro/widgets/caro_chat_overlay.dart';
 
 class CaroScreen extends StatefulWidget {
   const CaroScreen({super.key});
