@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, HttpUrl, field_validator
 from typing import Optional, Literal
+from app.schemas.user import UserPublic  # Import from user.py to get rating field
 
 # ---------- Requests ----------
 class RegisterRequest(BaseModel):
@@ -24,12 +25,7 @@ class LoginRequest(BaseModel):
     password: str
 
 # ---------- Responses ----------
-class UserPublic(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
-    avatar_url: Optional[str] = None
-    provider: str
+# Note: UserPublic is now imported from app.schemas.user to include rating field
 
 class TokenResponse(BaseModel):
     access_token: str

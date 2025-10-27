@@ -1,0 +1,27 @@
+# Giữ version của người merge (bên đang làm merge)
+lib/main.dart merge=ours
+lib/ui/screens/home_screen.dart merge=ours
+
+# iOS/macOS generated files
+ios/Runner.xcodeproj/* merge=ours
+macos/Flutter/GeneratedPluginRegistrant.swift merge=ours
+
+# Android build configs (local, auto-generated)
+android/local.properties merge=ours
+android/app/google-services.json merge=ours
+
+# Dependencies lock file - để tránh conflict build version
+pubspec.lock merge=ours
+pubspec.yaml merge=ours
+
+# Normalize line endings
+* text=auto
+
+# Binary assets (images, fonts, etc.)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.otf binary
+
+# End of file

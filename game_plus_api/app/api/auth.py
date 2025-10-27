@@ -7,9 +7,70 @@ from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.config import access_token_expires, SECRET_KEY, ALGORITHM
 from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserPublic
-from app.models.models import User
+from app.models.models import User, UserGameRating, Game
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+
+
+async def ensure_user_caro_rating(db: AsyncSession, user_id: int) -> int:
+    """
+    Đảm bảo user có rating cho game Caro.
+    Tự động tạo nếu chưa có.
+    Returns: rating hiện tại (default 1200).
+    """
+    game = await db.scalar(select(Game).where(Game.name == "Caro"))
+    if not game:
+        # Tạo game Caro nếu chưa có
+        game = Game(
+            name="Caro",
+            description="Classic Tic-Tac-Toe game with 5 in a row to win",
+            thumbnail_url=None
+        )
+        db.add(game)
+        await db.flush()
+    
+    # Tìm rating hiện có
+    rating_obj = await db.scalar(
+        select(UserGameRating)
+        .where(UserGameRating.user_id == user_id)
+        .where(UserGameRating.game_id == game.id)
+    )
+    
+    if not rating_obj:
+        # Tạo rating mới với giá trị mặc định
+        rating_obj = UserGameRating(
+            user_id=user_id,
+            game_id=game.id,
+            rating=1200,  # ELO starting rating
+            wins=0,
+            losses=0,
+            draws=0
+        )
+        db.add(rating_obj)
+        await db.flush()
+        print(f"✅ Created initial rating 1200 for user {user_id}")
+        return 1200
+    
+    return rating_obj.rating
+
+
+async def user_to_public(user: User, db: AsyncSession) -> UserPublic:
+    """Convert User model to UserPublic schema with rating."""
+    rating = await ensure_user_caro_rating(db, user.id)
+    
+    # Handle empty string avatar_url (Pydantic V2 doesn't allow empty string for HttpUrl)
+    avatar_url = user.avatar_url if user.avatar_url and user.avatar_url.strip() else None
+    
+    return UserPublic(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        avatar_url=avatar_url,
+        provider=user.provider,
+        bio=user.bio,
+        rating=rating,
+    )
+
 
 # ---------- Helpers ----------
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
@@ -43,6 +104,12 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
         provider_id=payload.provider_id,
     )
     db.add(user)
+    await db.flush()  # Flush để có user.id
+    
+    # Tự động tạo rating cho Caro
+    await ensure_user_caro_rating(db, user.id)
+    
+    # Commit tất cả changes
     await db.commit()
     await db.refresh(user)
 
@@ -50,10 +117,13 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
     expires = access_token_expires()
     token = create_access_token(subject=user.id, expires_delta=expires)
 
+    # Get user with rating
+    user_public = await user_to_public(user, db)
+
     return TokenResponse(
         access_token=token,
         expires_in=int(expires.total_seconds()),
-        user=UserPublic(id=user.id, username=user.username, email=user.email, avatar_url=user.avatar_url, provider=user.provider),
+        user=user_public,
     )
 
 @router.post("/login", response_model=TokenResponse)
@@ -65,10 +135,13 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     expires = access_token_expires()
     token = create_access_token(subject=user.id, expires_delta=expires)
 
+    # Get user with rating
+    user_public = await user_to_public(user, db)
+
     return TokenResponse(
         access_token=token,
         expires_in=int(expires.total_seconds()),
-        user=UserPublic(id=user.id, username=user.username, email=user.email, avatar_url=user.avatar_url, provider=user.provider),
+        user=user_public,
     )
 
 # OAuth2-style Bearer token dependency
@@ -97,11 +170,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     return user
 
 @router.get("/me", response_model=UserPublic)
-async def me(current_user: User = Depends(get_current_user)):
-    return UserPublic(
-        id=current_user.id,
-        username=current_user.username,
-        email=current_user.email,
-        avatar_url=current_user.avatar_url,
-        provider=current_user.provider,
-    )
+async def me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get current user profile with Caro rating."""
+    print(f"📍 GET /api/auth/me called for user {current_user.id} ({current_user.username})")
+    result = await user_to_public(current_user, db)
+    print(f"📤 Returning user data with rating: {result.rating}")
+    return result

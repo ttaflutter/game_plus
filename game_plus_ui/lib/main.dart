@@ -1,79 +1,56 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:game_plus/ui/screens/caro/caro_home_screen.dart';
 import 'package:game_plus/ui/screens/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// 👉 import màn menu Sudoku của bạn
-import 'package:game_plus/ui/screens/menu_screen.dart';
+import 'package:game_plus/ui/screens/auth/login_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env"); // load env variables
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Future<bool> _checkLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    return token != null && token.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Game Plus',
+      title: 'GamePlus',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      // 👉 mở Home trước
-      home: const HomeScreen(),
-    );
-  }
-}
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
+      home: FutureBuilder<bool>(
+        future: _checkLoggedIn(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Loading screen (splash)
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() => setState(() => _counter++);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 24),
-            // 👉 nút mở vào Sudoku Menu
-            ElevatedButton.icon(
-              icon: const Icon(Icons.grid_4x4_rounded),
-              label: const Text('Open Sudoku'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+          if (snapshot.hasData && snapshot.data == true) {
+            // Đã có token → vào thẳng Home
+            return const CaroHomeScreen();
+          } else {
+            // Chưa đăng nhập → Login
+            return const LoginScreen();
+          }
+        },
       ),
     );
   }
