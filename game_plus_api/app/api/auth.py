@@ -12,23 +12,51 @@ from app.models.models import User, UserGameRating, Game
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 
-async def get_user_caro_rating(db: AsyncSession, user_id: int) -> int | None:
-    """Helper function to get user's Caro game rating."""
+async def ensure_user_caro_rating(db: AsyncSession, user_id: int) -> int:
+    """
+    Đảm bảo user có rating cho game Caro.
+    Tự động tạo nếu chưa có.
+    Returns: rating hiện tại (default 1200).
+    """
     game = await db.scalar(select(Game).where(Game.name == "Caro"))
     if not game:
-        return None
+        # Tạo game Caro nếu chưa có
+        game = Game(
+            name="Caro",
+            description="Classic Tic-Tac-Toe game with 5 in a row to win",
+            thumbnail_url=None
+        )
+        db.add(game)
+        await db.flush()
     
+    # Tìm rating hiện có
     rating_obj = await db.scalar(
-        select(UserGameRating.rating)
+        select(UserGameRating)
         .where(UserGameRating.user_id == user_id)
         .where(UserGameRating.game_id == game.id)
     )
-    return rating_obj if rating_obj is not None else 1200
+    
+    if not rating_obj:
+        # Tạo rating mới với giá trị mặc định
+        rating_obj = UserGameRating(
+            user_id=user_id,
+            game_id=game.id,
+            rating=1200,  # ELO starting rating
+            wins=0,
+            losses=0,
+            draws=0
+        )
+        db.add(rating_obj)
+        await db.flush()
+        print(f"✅ Created initial rating 1200 for user {user_id}")
+        return 1200
+    
+    return rating_obj.rating
 
 
 async def user_to_public(user: User, db: AsyncSession) -> UserPublic:
     """Convert User model to UserPublic schema with rating."""
-    rating = await get_user_caro_rating(db, user.id)
+    rating = await ensure_user_caro_rating(db, user.id)
     
     # Handle empty string avatar_url (Pydantic V2 doesn't allow empty string for HttpUrl)
     avatar_url = user.avatar_url if user.avatar_url and user.avatar_url.strip() else None
@@ -76,6 +104,12 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
         provider_id=payload.provider_id,
     )
     db.add(user)
+    await db.flush()  # Flush để có user.id
+    
+    # Tự động tạo rating cho Caro
+    await ensure_user_caro_rating(db, user.id)
+    
+    # Commit tất cả changes
     await db.commit()
     await db.refresh(user)
 

@@ -24,6 +24,10 @@ async def notify_room_change(room: Room, db: AsyncSession, action: str = "update
     """Helper để broadcast room changes qua WebSocket."""
     try:
         from app.api.realtime import broadcast_room_update
+        from app.api.realtime_helpers import invalidate_rooms_cache
+        
+        # ✅ Invalidate cache khi có thay đổi
+        await invalidate_rooms_cache()
         
         # ✅ EXTRACT tất cả giá trị TRƯỚC khi gọi broadcast
         room_id = room.id

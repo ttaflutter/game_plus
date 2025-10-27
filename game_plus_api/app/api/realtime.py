@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from app.core.database import get_db
+from app.core.cache import cache_get, cache_set, cache_delete_pattern
 from app.models.models import Match, MatchPlayer, Move, MatchStatus, User, UserGameRating
 from datetime import datetime, timezone
 import asyncio
@@ -537,6 +538,15 @@ async def websocket_match(
                     continue
 
                 if mtype == "move":
+                    # ✅ Rate limiting: Giới hạn 1 move/giây để tránh spam
+                    from app.api.realtime_helpers import check_rate_limit
+                    if not check_rate_limit(user_id, min_interval=1.0):
+                        await websocket.send_text(json.dumps({
+                            "type": "error",
+                            "payload": "Too fast! Wait 1 second between moves"
+                        }))
+                        continue
+                    
                     if state.status != "playing":
                         await websocket.send_text(
                             json.dumps({
@@ -1259,7 +1269,10 @@ async def websocket_rooms(
 
 
 async def broadcast_room_update(room_data: dict, update_type: str = "update"):
-    """Broadcast room updates đến tất cả clients đang xem room list."""
+    """
+    Broadcast room updates đến tất cả clients đang xem room list.
+    Tối ưu: Gửi song song với asyncio.gather thay vì tuần tự.
+    """
     if not room_list_connections:
         print(f"⚠️ No room list connections to broadcast to")
         return
@@ -1272,33 +1285,26 @@ async def broadcast_room_update(room_data: dict, update_type: str = "update"):
     
     print(f"📢 Broadcasting room_{update_type} to {len(room_list_connections)} clients: Room {room_data.get('id')}")
     
-    disconnected = []
-    for user_id, ws in list(room_list_connections.items()):
+    # ✅ Gửi song song đến tất cả clients (parallel broadcast)
+    async def send_to_one(user_id: int, ws):
         try:
             await ws.send_text(data)
             print(f"  ✅ Sent to user {user_id}")
+            return user_id, True
         except Exception as e:
             print(f"  ⚠️ Failed to send to user {user_id}: {e}")
-            disconnected.append(user_id)
+            return user_id, False
+    
+    tasks = [send_to_one(uid, ws) for uid, ws in list(room_list_connections.items())]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
     
     # Cleanup disconnected
-    for user_id in disconnected:
-        room_list_connections.pop(user_id, None)
+    for result in results:
+        if isinstance(result, tuple) and not result[1]:
+            room_list_connections.pop(result[0], None)
     
     print(f"📊 Broadcast complete. Active connections: {len(room_list_connections)}")
-    """Broadcast room updates Ä'áº¿n táº¥t cáº£ clients Ä'ang xem room list."""
-    message = {
-        "type": f"room_{update_type}",  # room_update, room_created, room_deleted
-        "payload": room_data
-    }
-    data = json.dumps(message)
-    
-    for user_id, ws in list(room_list_connections.items()):
-        try:
-            await ws.send_text(data)
-        except Exception as e:
-            print(f"âš ï¸ Failed to send room update to user {user_id}: {e}")
-            room_list_connections.pop(user_id, None)
+
 
 
 

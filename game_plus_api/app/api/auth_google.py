@@ -7,6 +7,7 @@ from app.core.security import create_access_token
 from app.core.config import access_token_expires
 from app.models.models import User
 from app.schemas.auth import TokenResponse, UserPublic, LoginGoogleRequest
+from app.api.auth import ensure_user_caro_rating, user_to_public  # Import helpers
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
@@ -45,6 +46,11 @@ async def google_login(payload: LoginGoogleRequest, db: AsyncSession = Depends(g
             )
             db.add(user)
 
+        await db.flush()  # Flush để có user.id
+        
+        # Tự động tạo rating cho user mới/updated
+        await ensure_user_caro_rating(db, user.id)
+        
         await db.commit()
         await db.refresh(user)
 
@@ -52,14 +58,11 @@ async def google_login(payload: LoginGoogleRequest, db: AsyncSession = Depends(g
     expires = access_token_expires()
     jwt_token = create_access_token(subject=user.id, expires_delta=expires)
 
+    # Get user with rating
+    user_public = await user_to_public(user, db)
+
     return TokenResponse(
         access_token=jwt_token,
         expires_in=int(expires.total_seconds()),
-        user=UserPublic(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            avatar_url=user.avatar_url,
-            provider=user.provider,
-        )
+        user=user_public
     )

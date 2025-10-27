@@ -12,13 +12,22 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://admin:Admin123@@localhost:5432/gameplus_db"
 )
 
-# 🚀 Tạo engine và session
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+# 🚀 Tạo engine và session với connection pooling tối ưu cho 50 concurrent users
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,  # Tắt echo trong production để giảm overhead
+    future=True,
+    pool_size=20,  # Số connections pool mặc định (tăng từ 5 lên 20)
+    max_overflow=10,  # Số connections tạm thời thêm khi cần (tăng từ 10 lên 10)
+    pool_pre_ping=True,  # Kiểm tra connection trước khi dùng
+    pool_recycle=3600,  # Recycle connections sau 1 giờ để tránh stale
+)
 AsyncSessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
-    class_=AsyncSession
+    class_=AsyncSession,
+    expire_on_commit=False,  # Giảm lazy loading issues
 )
 
 # 🧱 Base class cho tất cả models
