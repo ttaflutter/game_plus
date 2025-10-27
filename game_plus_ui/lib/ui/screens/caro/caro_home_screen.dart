@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:game_plus/models/user_model.dart';
 import 'package:game_plus/ui/screens/caro/caro_playing_screen.dart';
 import 'package:game_plus/ui/screens/caro/caro_matching_screen.dart';
+import 'package:game_plus/ui/screens/caro/room_lobby_screen.dart';
 import 'package:game_plus/ui/widgets/custom_bottom_nav.dart';
 import 'package:provider/provider.dart';
 import 'package:game_plus/game/caro/caro_controller.dart';
@@ -204,152 +205,337 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
       opacity: _fadeAnimation,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(isTablet ? 24 : 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [Colors.blue.shade600, Colors.blue.shade800],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.shade600.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
         ),
-        child: Center(
-          child: Container(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Row(
-              children: [
-                // Avatar with glow effect
-                Container(
-                  width: isTablet ? 70 : 56,
-                  height: isTablet ? 70 : 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withOpacity(0.5),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.amber, width: 3),
-                    ),
-                    child: ClipOval(
-                      child: avatarUrl != null && avatarUrl.isNotEmpty
-                          ? Image.network(
-                              avatarUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return _buildDefaultAvatar(isTablet);
-                              },
-                            )
-                          : _buildDefaultAvatar(isTablet),
-                    ),
-                  ),
+        child: Stack(
+          children: [
+            // Background decorative elements
+            Positioned(
+              top: -40,
+              right: -40,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.08),
                 ),
-                SizedBox(width: isTablet ? 20 : 16),
-                // User info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ),
+            Positioned(
+              bottom: -20,
+              left: -20,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.05),
+                ),
+              ),
+            ),
+            // Caro logo pattern background
+            Positioned(
+              top: 10,
+              left: 20,
+              child: Opacity(
+                opacity: 0.05,
+                child: Icon(
+                  Icons.grid_4x4_rounded,
+                  size: isTablet ? 80 : 60,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 10,
+              right: 40,
+              child: Opacity(
+                opacity: 0.05,
+                child: Icon(
+                  Icons.close_rounded,
+                  size: isTablet ? 60 : 50,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            // Main content
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(isTablet ? 24 : 20),
+              child: Center(
+                child: Container(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: Row(
                     children: [
-                      Text(
-                        username.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: isTablet ? 22 : 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: isTablet ? 8 : 6),
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isTablet ? 12 : 10,
-                              vertical: isTablet ? 6 : 5,
-                            ),
+                      // Avatar with animated glow
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 1500),
+                        curve: Curves.easeInOut,
+                        builder: (context, value, child) {
+                          return Container(
+                            width: isTablet ? 75 : 60,
+                            height: isTablet ? 75 : 60,
                             decoration: BoxDecoration(
-                              color: Colors.amber,
-                              borderRadius: BorderRadius.circular(20),
+                              shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                                  color: Colors.amber.withOpacity(0.4 * value),
+                                  blurRadius: 20 * value,
+                                  spreadRadius: 3 * value,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.2 * value),
+                                  blurRadius: 30 * value,
+                                  spreadRadius: 5 * value,
                                 ),
                               ],
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star_rounded,
-                                  color: Colors.white,
-                                  size: isTablet ? 18 : 16,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.amber,
+                                  width: 3,
                                 ),
-                                SizedBox(width: isTablet ? 6 : 4),
-                                Text(
-                                  '$elo',
-                                  style: TextStyle(
-                                    fontSize: isTablet ? 16 : 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.amber.shade300,
+                                    Colors.amber.shade600,
+                                  ],
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: ClipOval(
+                                  child:
+                                      avatarUrl != null && avatarUrl.isNotEmpty
+                                      ? Image.network(
+                                          avatarUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return _buildDefaultAvatar(
+                                                  isTablet,
+                                                );
+                                              },
+                                        )
+                                      : _buildDefaultAvatar(isTablet),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(width: isTablet ? 20 : 16),
+
+                      // User info with animations
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Username with gradient
+                            ShaderMask(
+                              shaderCallback: (bounds) => LinearGradient(
+                                colors: [Colors.white, Colors.amber.shade200],
+                              ).createShader(bounds),
+                              child: Text(
+                                username.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: isTablet ? 24 : 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.5,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(height: isTablet ? 10 : 8),
+
+                            // ELO badge with premium design
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 14 : 12,
+                                    vertical: isTablet ? 8 : 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.amber.shade400,
+                                        Colors.orange.shade600,
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.amber.withOpacity(0.5),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star_rounded,
+                                        color: Colors.white,
+                                        size: isTablet ? 20 : 18,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            offset: const Offset(0, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(width: isTablet ? 6 : 5),
+                                      Text(
+                                        '$elo',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 18 : 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withOpacity(
+                                                0.3,
+                                              ),
+                                              offset: const Offset(0, 1),
+                                              blurRadius: 2,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: isTablet ? 6 : 4),
+                                      Text(
+                                        'ELO',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 12 : 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white.withOpacity(0.9),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: isTablet ? 10 : 8),
-                      // Progress bar with animation
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          height: isTablet ? 10 : 8,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: (elo % 100) / 100,
-                            child: Container(
+                            SizedBox(height: isTablet ? 12 : 10),
+
+                            // Animated progress bar
+                            Container(
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Colors.amber, Colors.orange],
-                                ),
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.amber.withOpacity(0.5),
-                                    blurRadius: 8,
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  height: isTablet ? 10 : 8,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: TweenAnimationBuilder<double>(
+                                    tween: Tween(
+                                      begin: 0.0,
+                                      end: (elo % 100) / 100,
+                                    ),
+                                    duration: const Duration(
+                                      milliseconds: 1200,
+                                    ),
+                                    curve: Curves.easeOutCubic,
+                                    builder: (context, value, child) {
+                                      return FractionallySizedBox(
+                                        alignment: Alignment.centerLeft,
+                                        widthFactor: value,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.amber.shade300,
+                                                Colors.amber.shade500,
+                                                Colors.orange.shade500,
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.amber.withOpacity(
+                                                  0.6,
+                                                ),
+                                                blurRadius: 8,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+
+                      // Optional: Settings icon
+                      Container(
+                        margin: EdgeInsets.only(left: isTablet ? 12 : 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 1,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -439,26 +625,13 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
                     ),
                     SizedBox(height: isTablet ? 20 : 16),
                     _buildModernButton(
-                      text: 'CHƠI VỚI BẠN',
+                      text: 'PHÒNG CHƠI',
                       icon: Icons.people_rounded,
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 12),
-                                Text('Tính năng đang phát triển'),
-                              ],
-                            ),
-                            backgroundColor: Colors.blue.shade600,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RoomLobbyScreen(),
                           ),
                         );
                       },

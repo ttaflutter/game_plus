@@ -242,3 +242,69 @@ class Challenge(Base):
         Index("ix_challenges_challenger", "challenger_id"),
         CheckConstraint("challenger_id != opponent_id", name="ck_no_self_challenge"),
     )
+
+# ==== ROOM SYSTEM =============================================================
+
+class RoomStatus(str, Enum):
+    waiting = "waiting"
+    playing = "playing"
+    finished = "finished"
+
+class Room(Base):
+    """
+    Phòng chơi với room code, host, password optional.
+    """
+    __tablename__ = "rooms"
+
+    id = Column(Integer, primary_key=True)
+    room_code = Column(String(6), unique=True, nullable=False, index=True)  # Mã 6 ký tự
+    room_name = Column(String(100), nullable=False)
+    host_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    
+    # Room settings
+    password = Column(String(255), nullable=True)  # Hash của password nếu có
+    is_public = Column(Boolean, default=True)
+    max_players = Column(Integer, default=2)
+    board_rows = Column(Integer, default=15)
+    board_cols = Column(Integer, default=19)
+    win_len = Column(Integer, default=5)
+    
+    # Status
+    status = Column(SAEnum(RoomStatus), nullable=False, default=RoomStatus.waiting)
+    match_id = Column(Integer, ForeignKey("matches.id", ondelete="SET NULL"), nullable=True)
+    
+    # Timestamps
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    started_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    finished_at = Column(TIMESTAMP(timezone=True), nullable=True)
+
+    # Relationships
+    host = relationship("User", foreign_keys=[host_id])
+    game = relationship("Game")
+    match = relationship("Match")
+    players = relationship("RoomPlayer", back_populates="room", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        CheckConstraint("max_players >= 2 AND max_players <= 4", name="ck_room_max_players"),
+        Index("ix_rooms_status", "status"),
+        Index("ix_rooms_host", "host_id"),
+    )
+
+class RoomPlayer(Base):
+    """
+    Người chơi trong phòng với trạng thái ready.
+    """
+    __tablename__ = "room_players"
+
+    room_id = Column(Integer, ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    is_ready = Column(Boolean, default=False)
+    joined_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    room = relationship("Room", back_populates="players")
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("ix_room_players_user", "user_id"),
+    )

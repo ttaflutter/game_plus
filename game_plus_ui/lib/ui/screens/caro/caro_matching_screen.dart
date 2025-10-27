@@ -39,6 +39,9 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
   late Animation<Offset> _slideRightAnimation;
 
   bool _isMatched = false;
+  bool _isPreparing = false; // Trạng thái đang chuẩn bị phòng
+  int _preparingCountdown = 5; // Countdown 5 giây
+  Timer? _preparingTimer;
   String? _opponentUsername;
   int? _opponentRating;
   String? _opponentAvatar;
@@ -238,15 +241,10 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
 
           _slideController.forward();
 
-          // Wait for animation then navigate
+          // Wait for slide animation then show preparing screen
           Future.delayed(const Duration(milliseconds: 1500), () {
-            if (mounted && widget.onMatchFound != null) {
-              // Truyền matchId, myRating, opponentRating
-              widget.onMatchFound!(
-                matchId,
-                widget.myRating ?? 1200,
-                _opponentRating ?? 1200,
-              );
+            if (mounted) {
+              _startPreparingPhase();
             }
           });
         }
@@ -285,8 +283,40 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
     }
   }
 
+  void _startPreparingPhase() {
+    setState(() {
+      _isPreparing = true;
+      _preparingCountdown = 5; // 5 giây
+    });
+
+    // Countdown timer
+    _preparingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        _preparingCountdown--;
+      });
+
+      // Navigate khi countdown về 0
+      if (_preparingCountdown <= 0) {
+        timer.cancel();
+        if (mounted && widget.onMatchFound != null) {
+          widget.onMatchFound!(
+            _currentMatchId!,
+            widget.myRating ?? 1200,
+            _opponentRating ?? 1200,
+          );
+        }
+      }
+    });
+  }
+
   void _cleanupWebSocket() {
     _isCancelled = true;
+    _preparingTimer?.cancel();
 
     // Send cancel message to backend BEFORE closing
     try {
@@ -327,6 +357,7 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
     _rotateController.dispose();
     _pulseController.dispose();
     _slideController.dispose();
+    _preparingTimer?.cancel();
     _cleanupWebSocket();
     super.dispose();
   }
@@ -521,7 +552,14 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
                         SizedBox(height: isSmallScreen ? 20 : 40),
 
                         // Status Text
-                        if (!_isMatched)
+                        if (_isPreparing)
+                          // Preparing battle screen
+                          _buildPreparingSection(
+                            isSmallScreen,
+                            matchedIconSize,
+                            matchedFontSize,
+                          )
+                        else if (!_isMatched)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: AnimatedBuilder(
@@ -798,6 +836,224 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPreparingSection(
+    bool isSmallScreen,
+    double iconSize,
+    double fontSize,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          // Animated sword crossing icon
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 800),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: 0.8 + (0.2 * value),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Glow effect
+                    Container(
+                      width: iconSize * 1.5,
+                      height: iconSize * 1.5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.amber.withOpacity(0.3 * value),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Main icon
+                    Icon(
+                      Icons.sports_esports_rounded,
+                      size: iconSize,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.amber.withOpacity(0.8),
+                          blurRadius: 20,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: isSmallScreen ? 16 : 24),
+
+          // "Preparing Battle" text
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [Colors.white, Colors.amber.shade200, Colors.white],
+              stops: const [0.0, 0.5, 1.0],
+            ).createShader(bounds),
+            child: Text(
+              'CHUẨN BỊ TRẬN ĐẤU',
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          SizedBox(height: isSmallScreen ? 12 : 16),
+
+          // Countdown with pulse animation
+          TweenAnimationBuilder<double>(
+            key: ValueKey(_preparingCountdown), // Reset animation on change
+            tween: Tween(begin: 1.2, end: 1.0),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Container(
+                  width: isSmallScreen ? 80 : 100,
+                  height: isSmallScreen ? 80 : 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Colors.amber.shade400, Colors.orange.shade600],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.5),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$_preparingCountdown',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 40 : 50,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.3),
+                            offset: const Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: isSmallScreen ? 16 : 24),
+
+          // Loading text (simple, no animation)
+          Text(
+            'Đang vào phòng...',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: isSmallScreen ? 16 : 18,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          SizedBox(height: isSmallScreen ? 12 : 16),
+
+          // Progress bar
+          Container(
+            width: isSmallScreen ? 200 : 250,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey(_preparingCountdown),
+              tween: Tween(
+                begin: 1.0 - (_preparingCountdown / 5),
+                end: 1.0 - ((_preparingCountdown - 1) / 5),
+              ),
+              duration: const Duration(seconds: 1),
+              curve: Curves.linear,
+              builder: (context, value, child) {
+                return FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: value.clamp(0.0, 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.shade300, Colors.orange.shade500],
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withOpacity(0.6),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          SizedBox(height: isSmallScreen ? 20 : 32),
+
+          // Tips or messages
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 16 : 24,
+              vertical: isSmallScreen ? 12 : 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  color: Colors.amber.shade300,
+                  size: isSmallScreen ? 20 : 24,
+                ),
+                SizedBox(width: isSmallScreen ? 8 : 12),
+                Flexible(
+                  child: Text(
+                    'Mẹo: Chiếm trung tâm bàn cờ để có lợi thế!',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: isSmallScreen ? 13 : 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

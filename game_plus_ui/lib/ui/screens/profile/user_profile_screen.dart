@@ -247,247 +247,272 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [Colors.blue.shade700, Colors.blue.shade900]
-                : [Colors.blue.shade600, Colors.blue.shade800],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Decorative circles
-            Positioned(
-              top: -50,
-              right: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
-                ),
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate if app bar is collapsed
+          final double appBarHeight = constraints.maxHeight;
+          final bool isCollapsed = appBarHeight <= kToolbarHeight + 50;
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [Colors.blue.shade700, Colors.blue.shade900]
+                    : [Colors.blue.shade600, Colors.blue.shade800],
               ),
             ),
-            Positioned(
-              bottom: -30,
-              left: -30,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
-                ),
-              ),
-            ),
-            // Content
-            FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              centerTitle: false,
-              title: Container(
-                constraints: const BoxConstraints(maxWidth: 250),
-                child: Text(
-                  _profile!.username,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    letterSpacing: 0.5,
+            child: Stack(
+              children: [
+                // Decorative circles
+                Positioned(
+                  top: -50,
+                  right: -50,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              background: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 80),
-                  // Avatar
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Hero(
-                      tag: 'avatar_${_profile!.userId}',
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 110,
-                            height: 110,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.9),
-                                  Colors.white.withOpacity(0.7),
-                                ],
-                              ),
-                              border: Border.all(color: Colors.white, width: 4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3),
-                              child:
-                                  _profile!.avatarUrl != null &&
-                                      _profile!.avatarUrl!.isNotEmpty
-                                  ? ClipOval(
-                                      child: Image.network(
-                                        _profile!.avatarUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Center(
-                                                child: Text(
-                                                  _profile!.username[0]
-                                                      .toUpperCase(),
-                                                  style: TextStyle(
-                                                    color: Colors.blue.shade700,
-                                                    fontSize: 42,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        _profile!.username[0].toUpperCase(),
-                                        style: TextStyle(
-                                          color: Colors.blue.shade700,
-                                          fontSize: 42,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          if (_profile!.isOnline)
-                            Positioned(
-                              bottom: 5,
-                              right: 5,
-                              child: Container(
-                                width: 24,
-                                height: 24,
+                Positioned(
+                  bottom: -30,
+                  left: -30,
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.05),
+                    ),
+                  ),
+                ),
+                // Content
+                FlexibleSpaceBar(
+                  titlePadding: EdgeInsets.only(
+                    left: isCollapsed
+                        ? 56
+                        : 20, // Tránh back button khi collapsed
+                    bottom: 16,
+                    right: 16,
+                  ),
+                  centerTitle: false,
+                  title: Text(
+                    _profile!.username,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      letterSpacing: 0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  background: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 80),
+                      // Avatar
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Hero(
+                          tag: 'avatar_${_profile!.userId}',
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 110,
+                                height: 110,
                                 decoration: BoxDecoration(
-                                  color: Colors.green.shade500,
                                   shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.9),
+                                      Colors.white.withOpacity(0.7),
+                                    ],
+                                  ),
                                   border: Border.all(
                                     color: Colors.white,
                                     width: 4,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.green.withOpacity(0.5),
-                                      blurRadius: 8,
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(3),
+                                  child:
+                                      _profile!.avatarUrl != null &&
+                                          _profile!.avatarUrl!.isNotEmpty
+                                      ? ClipOval(
+                                          child: Image.network(
+                                            _profile!.avatarUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Center(
+                                                    child: Text(
+                                                      _profile!.username[0]
+                                                          .toUpperCase(),
+                                                      style: TextStyle(
+                                                        color: Colors
+                                                            .blue
+                                                            .shade700,
+                                                        fontSize: 42,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Text(
+                                            _profile!.username[0].toUpperCase(),
+                                            style: TextStyle(
+                                              color: Colors.blue.shade700,
+                                              fontSize: 42,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Bio
-                  if (_profile!.bio != null && _profile!.bio!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        _profile!.bio!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.95),
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  // Rank badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.25),
-                          Colors.white.withOpacity(0.15),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade400,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.amber.withOpacity(0.5),
-                                blurRadius: 8,
-                              ),
+                              if (_profile!.isOnline)
+                                Positioned(
+                                  bottom: 5,
+                                  right: 5,
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade500,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 4,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.green.withOpacity(0.5),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.emoji_events_rounded,
-                            color: Colors.white,
-                            size: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Bio
+                      if (_profile!.bio != null && _profile!.bio!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Text(
+                            _profile!.bio!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.95),
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Hạng #${_profile!.rank}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                      const SizedBox(height: 16),
+                      // Rank badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
                         ),
-                      ],
-                    ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.25),
+                              Colors.white.withOpacity(0.15),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade400,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.amber.withOpacity(0.5),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.emoji_events_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Hạng #${_profile!.rank}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ); // Đóng Container của LayoutBuilder
+        }, // Đóng builder function
+      ), // Đóng LayoutBuilder
     );
   }
 

@@ -42,7 +42,7 @@ class RoomState:
         self.player_info: Dict[int, dict] = {}       # user_id -> {username, avatar_url}
         self.lock = asyncio.Lock()
         self.loaded_from_db = False  # Ä‘Ã£ khÃ´i phá»¥c bÃ n tá»« DB chÆ°a?
-        self.turn_start_time: datetime | None = None  # thá»i Ä‘iá»ƒm báº¯t Ä‘áº§u lÆ°á»£t hiá»‡n táº¡i
+        self.turn_start_time: datetime | None = None  # thá»i Ä‘iá»ƒm báº¯t Ä‘áº§u lÆ°á»£t hiện tại
         self.timeout_task: asyncio.Task | None = None  # task Ä‘áº¿m thá»i gian
         self.rematch_requests: set[int] = set()  # user_ids Ä‘Ã£ gá»­i yÃªu cáº§u rematch
 
@@ -52,7 +52,7 @@ class RoomState:
             elapsed = (datetime.now(timezone.utc) - self.turn_start_time).total_seconds()
             time_left = max(0, MOVE_TIMEOUT - elapsed)
         
-        # Táº¡o danh sÃ¡ch players vá»›i Ä'áº§y Ä'á»§ thÃ´ng tin
+        # Tạo danh sÃ¡ch players vá»›i Ä'áº§y Ä'á»§ thÃ´ng tin
         players_list = []
         for uid, sym in self.players.items():
             player_data = {"user_id": uid, "symbol": sym}
@@ -75,9 +75,7 @@ class RoomState:
 
 rooms: Dict[int, RoomState] = {}
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# Utils
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 async def decode_token(token: str) -> int:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -107,21 +105,20 @@ async def broadcast(state: RoomState, message: dict):
         try:
             await conn.ws.send_text(data)
         except Exception:
-            # bá» qua client Ä‘Ã£ Ä‘á»©t
             pass
 
 async def end_match(state: RoomState, db: AsyncSession, winner_id: int | None, reason: str = "normal"):
-    """Káº¿t thÃºc tráº­n Ä‘áº¥u vÃ  cáº­p nháº­t database."""
+    """Káº¿t thÃºc tráº­n Ä‘áº¥u vÃ  Update database."""
     print(f"ðŸ Ending match {state.match_id}, winner: {winner_id}, reason: {reason}")
     
     state.status = "finished"
     
-    # Cancel timeout task náº¿u cÃ³
+    # Cancel timeout task 
     if state.timeout_task and not state.timeout_task.done():
         state.timeout_task.cancel()
     
     try:
-        # Cáº­p nháº­t match status
+        # cập nhật match status
         result = await db.execute(
             update(Match).where(Match.id == state.match_id).values(
                 status=MatchStatus.finished,
@@ -130,7 +127,7 @@ async def end_match(state: RoomState, db: AsyncSession, winner_id: int | None, r
         )
         print(f"âœ… Updated match {state.match_id} status to finished (rows affected: {result.rowcount})")
         
-        # Cáº­p nháº­t winner/loser
+        # Update winner/loser
         if winner_id:
             result = await db.execute(
                 update(MatchPlayer)
@@ -148,7 +145,7 @@ async def end_match(state: RoomState, db: AsyncSession, winner_id: int | None, r
                 )
                 print(f"âœ… Set losers {loser_ids} (rows: {result2.rowcount})")
         else:
-            # Draw - cáº£ 2 Ä‘á»u khÃ´ng tháº¯ng
+            # Draw
             result = await db.execute(
                 update(MatchPlayer)
                 .where(MatchPlayer.match_id == state.match_id)
@@ -160,7 +157,7 @@ async def end_match(state: RoomState, db: AsyncSession, winner_id: int | None, r
         await db.commit()
         print(f"âœ… COMMITTED match {state.match_id} to database!")
         
-        # Cáº­p nháº­t rating
+        # Update rating
         print(f"ðŸ“Š Updating ratings for match {state.match_id}...")
         rating_changes = await update_ratings(state, db, winner_id)
         print(f"âœ… Ratings updated for match {state.match_id}")
@@ -175,13 +172,13 @@ async def end_match(state: RoomState, db: AsyncSession, winner_id: int | None, r
         return {}
 
 async def update_ratings(state: RoomState, db: AsyncSession, winner_id: int | None):
-    """Cáº­p nháº­t ELO rating sau tráº­n Ä‘áº¥u."""
+    """Update ELO rating sau tráº­n Ä‘áº¥u."""
     from app.models.models import UserGameRating
     
     try:
         print(f"ðŸ“Š Starting update_ratings for match {state.match_id}, winner: {winner_id}")
         
-        # Láº¥y game_id
+        # Lấy game_id
         match = await db.scalar(select(Match).where(Match.id == state.match_id))
         if not match:
             print(f"âš ï¸  Match {state.match_id} not found!")
@@ -194,7 +191,7 @@ async def update_ratings(state: RoomState, db: AsyncSession, winner_id: int | No
         
         print(f"ðŸ‘¥ Players: {player_ids}")
         
-        # Láº¥y rating hiá»‡n táº¡i
+        # Lấy rating hiện tại
         ratings = {}
         for uid in player_ids:
             rating_obj = await db.scalar(
@@ -204,7 +201,7 @@ async def update_ratings(state: RoomState, db: AsyncSession, winner_id: int | No
                 )
             )
             if not rating_obj:
-                # Táº¡o rating má»›i
+                # Tạo rating má»›i
                 rating_obj = UserGameRating(
                     user_id=uid,
                     game_id=match.game_id,
@@ -271,7 +268,7 @@ async def update_ratings(state: RoomState, db: AsyncSession, winner_id: int | No
         return {}
 
 async def handle_timeout(state: RoomState):
-    """Xá»­ lÃ½ khi háº¿t thá»i gian - ngÆ°á»i chÆ¡i hiá»‡n táº¡i thua."""
+    """Xá»­ lÃ½ khi háº¿t thá»i gian - ngÆ°á»i chÆ¡i hiện tại thua."""
     from app.core.database import AsyncSessionLocal, engine
     from sqlalchemy import text
     
@@ -432,7 +429,7 @@ async def websocket_match(
         await websocket.close()
         return
 
-    # 3) Láº¥y / táº¡o room + khÃ´i phá»¥c bÃ n tá»« DB náº¿u cáº§n
+    # 3) Lấy / Tạo room + khÃ´i phá»¥c bÃ n tá»« DB náº¿u cáº§n
     if match_id not in rooms:
         rooms[match_id] = RoomState(match_id, match_obj.board_rows, match_obj.board_cols, match_obj.win_len)
     state = rooms[match_id]
@@ -453,7 +450,7 @@ async def websocket_match(
         
         state.connections[user_id] = conn
 
-        # Láº¥y thÃ´ng tin user náº¿u chÆ°a cÃ³
+        # Lấy thÃ´ng tin user náº¿u chÆ°a cÃ³
         if user_id not in state.player_info:
             user_obj = await db.scalar(select(User).where(User.id == user_id))
             if user_obj:
@@ -500,7 +497,7 @@ async def websocket_match(
             # Báº¯t Ä'áº§u Ä'áº¿m giá» cho ngÆ°á»i chÆ¡i X
             await start_turn_timer(state)
             
-            # Táº¡o players list vá»›i thÃ´ng tin Ä'áº§y Ä'á»§
+            # Tạo players list vá»›i thÃ´ng tin Ä'áº§y Ä'á»§
             players_with_info = []
             for uid, sym in state.players.items():
                 player_data = {"user_id": uid, "symbol": sym}
@@ -682,9 +679,9 @@ async def websocket_match(
                         }
                     })
                     
-                    # Náº¿u cáº£ 2 ngÆ°á»i chÆ¡i Ä‘á»u Ä‘á»“ng Ã½ -> táº¡o tráº­n má»›i
+                    # Náº¿u cáº£ 2 ngÆ°á»i chÆ¡i Ä‘á»u Ä‘á»“ng Ã½ -> Tạo tráº­n má»›i
                     if len(state.rematch_requests) == len(state.players) and len(state.players) == 2:
-                        # Táº¡o match má»›i
+                        # Tạo match má»›i
                         from app.models.models import Game
                         
                         game = await db.scalar(select(Game).where(Game.name == "Caro"))
@@ -795,6 +792,7 @@ async def websocket_match(
 # Matchmaking WebSocket - Ä‘á»ƒ thÃ´ng bÃ¡o khi tÃ¬m Ä‘Æ°á»£c Ä‘á»‘i thá»§
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 matchmaking_queue: Dict[int, WebSocket] = {}  # user_id -> websocket
+notification_connections: Dict[int, WebSocket] = {}  # user_id -> websocket
 
 @router.websocket("/matchmaking")
 async def websocket_matchmaking(
@@ -826,7 +824,7 @@ async def websocket_matchmaking(
             }
         }))
         
-        # TÃ¬m hoáº§c táº¡o match
+        # TÃ¬m hoáº§c Tạo match
         from app.models.models import Game
         
         game = await db.scalar(select(Game).where(Game.name == "Caro"))
@@ -852,7 +850,7 @@ async def websocket_matchmaking(
         is_match_ready = False
         
         if not match:
-            # Táº¡o match má»›i
+            # Tạo match má»›i
             new_match = Match(
                 game_id=game_id,
                 board_rows=15,
@@ -878,7 +876,7 @@ async def websocket_matchmaking(
         )
         
         if not exists:
-            # Äáº¿m sá»‘ ngÆ°á»i chÆ¡i hiá»‡n táº¡i
+            # Äáº¿m sá»‘ ngÆ°á»i chÆ¡i hiện tại
             current_players = await db.execute(
                 select(MatchPlayer).where(MatchPlayer.match_id == match_id)
             )
@@ -906,7 +904,7 @@ async def websocket_matchmaking(
         
         # Náº¿u match Ä'Ã£ ready, thÃ´ng bÃ¡o cho Cáº¢ 2 ngÆ°á»i chÆ¡i
         if is_match_ready:
-            # Láº¥y thÃ´ng tin cáº£ 2 players
+            # Lấy thÃ´ng tin cáº£ 2 players
             players_result = await db.execute(
                 select(MatchPlayer, User)
                 .join(User, User.id == MatchPlayer.user_id)
@@ -916,7 +914,7 @@ async def websocket_matchmaking(
             
             players_info = []
             for mp, user in players_data:
-                # Láº¥y rating riÃªng biá»‡t Ä'á»ƒ trÃ¡nh lá»—i greenlet
+                # Lấy rating riÃªng biá»‡t Ä'á»ƒ trÃ¡nh lá»—i greenlet
                 rating_obj = await db.scalar(
                     select(UserGameRating.rating)
                     .where(UserGameRating.user_id == user.id)
@@ -1007,7 +1005,7 @@ async def websocket_matchmaking(
                     
                     players_info = []
                     for mp, user in players_data:
-                        # Láº¥y rating riÃªng biá»‡t
+                        # Lấy rating riÃªng biá»‡t
                         rating_obj = await db.scalar(
                             select(UserGameRating.rating)
                             .where(UserGameRating.user_id == user.id)
@@ -1117,6 +1115,191 @@ async def send_notification(user_id: int, notification: dict):
         except Exception as e:
             print(f"âš ï¸ Failed to send notification to user {user_id}: {e}")
             notification_connections.pop(user_id, None)
+
+
+# â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+# Room List WebSocket - real-time room updates
+# â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+room_list_connections: Dict[int, WebSocket] = {}  # user_id -> websocket
+
+@router.websocket("/rooms")
+async def websocket_rooms(
+    websocket: WebSocket,
+    token: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """WebSocket endpoint cho room list - nháº­n updates real-time."""
+    # Auth
+    try:
+        await websocket.accept()
+        user_id = await decode_token(token)
+    except ValueError:
+        await websocket.close(code=4001)
+        return
+    
+    print(f"ðŸ  User {user_id} connected to room list")
+    
+    # Äóng connection cÅ© náº¿u cÃ³
+    if user_id in room_list_connections:
+        try:
+            await room_list_connections[user_id].close()
+        except:
+            pass
+    
+    # ThÃªm connection má»›i
+    room_list_connections[user_id] = websocket
+    
+    try:
+        # Gá»­i danh sÃ¡ch rooms ban Ä'áº§u
+        from app.models.models import Room, RoomStatus, User as RoomUser, Game
+        from sqlalchemy.orm import selectinload
+        
+        rooms_query = await db.execute(
+            select(Room)
+            .options(
+                selectinload(Room.host),
+                selectinload(Room.game),
+                selectinload(Room.players)
+            )
+            .where(Room.status == RoomStatus.waiting)  # Chỉ lấy phòng waiting
+            .order_by(Room.created_at.desc())
+        )
+        rooms_list = rooms_query.scalars().all()
+        
+        rooms_data = []
+        for room in rooms_list:
+            rooms_data.append({
+                "id": room.id,
+                "name": room.room_name,  # ← Fixed: room_name not name
+                "room_code": room.room_code,  # ← ADDED: room_code for join
+                "game_id": room.game_id,
+                "game_name": room.game.name if room.game else None,
+                "host_id": room.host_id,
+                "host_username": room.host.username if room.host else None,
+                "max_players": room.max_players,
+                "current_players": len(room.players),
+                "status": room.status.value if hasattr(room.status, "value") else str(room.status),
+                "is_private": room.is_public == False,  # ← Fixed: is_public inverted
+                "created_at": room.created_at.isoformat() if room.created_at else None,
+            })
+        
+        await websocket.send_text(json.dumps({
+            "type": "rooms_list",
+            "payload": {
+                "rooms": rooms_data,
+                "total": len(rooms_data)
+            }
+        }))
+        
+        # Giá»¯ connection vÃ  nghe commands
+        while True:
+            try:
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+                msg = json.loads(raw)
+                
+                # Respond to ping
+                if msg.get("type") == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong"}))
+                
+                # Refresh rooms list on request
+                elif msg.get("type") == "refresh":
+                    rooms_query = await db.execute(
+                        select(Room)
+                        .options(
+                            selectinload(Room.host),
+                            selectinload(Room.game),
+                            selectinload(Room.players)
+                        )
+                        .where(Room.status == RoomStatus.waiting)  # Chỉ lấy phòng waiting
+                        .order_by(Room.created_at.desc())
+                    )
+                    rooms_list = rooms_query.scalars().all()
+                    
+                    rooms_data = []
+                    for room in rooms_list:
+                        rooms_data.append({
+                            "id": room.id,
+                            "name": room.room_name,  # ← Fixed: room_name not name
+                            "room_code": room.room_code,  # ← ADDED: room_code for join
+                            "game_id": room.game_id,
+                            "game_name": room.game.name if room.game else None,
+                            "host_id": room.host_id,
+                            "host_username": room.host.username if room.host else None,
+                            "max_players": room.max_players,
+                            "current_players": len(room.players),
+                            "status": room.status.value if hasattr(room.status, "value") else str(room.status),
+                            "is_private": room.is_public == False,  # ← Fixed: is_public inverted
+                            "created_at": room.created_at.isoformat() if room.created_at else None,
+                        })
+                    
+                    await websocket.send_text(json.dumps({
+                        "type": "rooms_list",
+                        "payload": {
+                            "rooms": rooms_data,
+                            "total": len(rooms_data)
+                        }
+                    }))
+                    
+            except asyncio.TimeoutError:
+                # Send ping to keep alive
+                await websocket.send_text(json.dumps({"type": "ping"}))
+            except json.JSONDecodeError:
+                pass
+                
+    except WebSocketDisconnect:
+        print(f"ðŸšª User {user_id} disconnected from room list")
+    except Exception as e:
+        print(f"âŒ Error in room list handler: {e}")
+    finally:
+        room_list_connections.pop(user_id, None)
+        try:
+            await websocket.close()
+        except:
+            pass
+
+
+async def broadcast_room_update(room_data: dict, update_type: str = "update"):
+    """Broadcast room updates đến tất cả clients đang xem room list."""
+    if not room_list_connections:
+        print(f"⚠️ No room list connections to broadcast to")
+        return
+    
+    message = {
+        "type": f"room_{update_type}",
+        "payload": room_data
+    }
+    data = json.dumps(message)
+    
+    print(f"📢 Broadcasting room_{update_type} to {len(room_list_connections)} clients: Room {room_data.get('id')}")
+    
+    disconnected = []
+    for user_id, ws in list(room_list_connections.items()):
+        try:
+            await ws.send_text(data)
+            print(f"  ✅ Sent to user {user_id}")
+        except Exception as e:
+            print(f"  ⚠️ Failed to send to user {user_id}: {e}")
+            disconnected.append(user_id)
+    
+    # Cleanup disconnected
+    for user_id in disconnected:
+        room_list_connections.pop(user_id, None)
+    
+    print(f"📊 Broadcast complete. Active connections: {len(room_list_connections)}")
+    """Broadcast room updates Ä'áº¿n táº¥t cáº£ clients Ä'ang xem room list."""
+    message = {
+        "type": f"room_{update_type}",  # room_update, room_created, room_deleted
+        "payload": room_data
+    }
+    data = json.dumps(message)
+    
+    for user_id, ws in list(room_list_connections.items()):
+        try:
+            await ws.send_text(data)
+        except Exception as e:
+            print(f"âš ï¸ Failed to send room update to user {user_id}: {e}")
+            room_list_connections.pop(user_id, None)
+
 
 
 

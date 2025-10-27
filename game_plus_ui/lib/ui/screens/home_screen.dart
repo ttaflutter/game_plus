@@ -69,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final currentUser = await authService.getCurrentUser();
       print("👤 Current user: ${currentUser.username} (ID: ${currentUser.id})");
 
-      // Show matching screen với thông tin thật
       if (!mounted) return;
       final result = await Navigator.push(
         context,

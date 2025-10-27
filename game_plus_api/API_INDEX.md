@@ -11,18 +11,20 @@
 ### Game Features
 
 4. **[Matches API](./README.md#matches)** - Tạo và quản lý trận đấu Caro
-5. **[Match History API](./MATCH_HISTORY_API.md)** - Xem lịch sử đấu, replay, chi tiết trận 🆕
-6. **[Scores API](./README.md#scores)** - Lưu và xem điểm số
+5. **[Room System API](./ROOM_SYSTEM_API.md)** - Tạo phòng, join bằng code, host controls 🆕
+6. **[Match History API](./MATCH_HISTORY_API.md)** - Xem lịch sử đấu, replay, chi tiết trận
+7. **[Scores API](./README.md#scores)** - Lưu và xem điểm số
 
 ### Social Features
 
-7. **[Friends API](./FRIEND_SYSTEM_API.md)** - Kết bạn, gửi/nhận lời mời
-8. **[Leaderboard API](./LEADERBOARD_API.md)** - Bảng xếp hạng, xem profile 🆕
-9. **[Challenges API](./FRIEND_SYSTEM_API.md#challenge-system)** - Thách đấu bạn bè
+8. **[Friends API](./FRIEND_SYSTEM_API.md)** - Kết bạn, gửi/nhận lời mời
+9. **[Leaderboard API](./LEADERBOARD_API.md)** - Bảng xếp hạng, xem profile
+10. **[Profile API](./PROFILE_API.md)** - Quản lý profile, đổi mật khẩu, settings 🆕
+11. **[Challenges API](./FRIEND_SYSTEM_API.md#challenge-system)** - Thách đấu bạn bè
 
 ### Real-time
 
-10. **[WebSocket API](./WEBSOCKET_API.md)** - Real-time matchmaking, notifications
+12. **[WebSocket API](./WEBSOCKET_API.md)** - Real-time matchmaking, notifications
 
 ---
 
@@ -50,7 +52,48 @@ http://localhost:8000/redoc
 
 ## 📋 API Summary
 
-### Match History APIs (New! 🆕)
+### Room System APIs (New! 🆕)
+
+```
+POST   /api/rooms/create                     # Tạo phòng mới
+GET    /api/rooms/list                       # Danh sách phòng công khai
+GET    /api/rooms/{room_id}                  # Chi tiết phòng
+POST   /api/rooms/join                       # Join phòng bằng code
+POST   /api/rooms/{room_id}/ready            # Toggle ready status
+POST   /api/rooms/{room_id}/kick             # Kick player (host only)
+POST   /api/rooms/{room_id}/start            # Start game (host only)
+POST   /api/rooms/{room_id}/leave            # Rời phòng
+DELETE /api/rooms/{room_id}                  # Xóa phòng (host only)
+```
+
+**Features:**
+
+- ✅ Room code 6 ký tự để join
+- ✅ Host controls (kick, start game)
+- ✅ Ready system
+- ✅ Password protection
+- ✅ Public/Private rooms
+- ✅ Custom board settings
+
+---
+
+### Profile APIs (New! 🆕)
+
+```
+GET    /api/profile/me                       # Profile đầy đủ
+PUT    /api/profile/update                   # Cập nhật profile
+PUT    /api/profile/avatar                   # Update avatar
+POST   /api/profile/change-password          # Đổi mật khẩu
+DELETE /api/profile/delete-account           # Xóa tài khoản
+POST   /api/profile/logout                   # Đăng xuất
+GET    /api/profile/stats                    # Stats chi tiết
+GET    /api/profile/settings                 # Cài đặt
+PUT    /api/profile/settings                 # Cập nhật cài đặt
+```
+
+---
+
+### Match History APIs
 
 ```
 GET  /api/match-history/my-matches           # Lịch sử đấu của mình

@@ -3,7 +3,7 @@ from app.core.database import init_db
 from app.core.middleware import setup_cors
 from app.api import (
     auth, auth_google, users, games, scores, realtime, 
-    matches, friends, leaderboard, match_history, profile
+    matches, friends, leaderboard, match_history, profile, rooms
 )
 
 app = FastAPI(title="GamePlus API", version="1.0.0")
@@ -27,6 +27,7 @@ app.include_router(friends.router)
 app.include_router(leaderboard.router)
 app.include_router(match_history.router)
 app.include_router(profile.router)
+app.include_router(rooms.router)
 
 @app.get("/api/test-db")
 async def test_db():

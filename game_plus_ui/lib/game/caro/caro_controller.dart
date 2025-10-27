@@ -226,6 +226,9 @@ class CaroController extends ChangeNotifier {
         currentTurn = payload["next_turn"];
         moveCount = payload["turn_no"] ?? moveCount + 1;
 
+        // CRITICAL: Stop timer cũ trước khi reset time
+        _stopTimer();
+
         final timeLimitMove = payload["time_limit"];
         if (timeLimitMove != null) {
           if (timeLimitMove is int) {
