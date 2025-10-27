@@ -1384,125 +1384,178 @@ class _SearchUserDialogState extends State<_SearchUserDialog> {
                     final user = _searchResults[index];
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.grey.shade200),
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        leading: Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.purple.shade400,
-                                Colors.purple.shade600,
+                      child: Row(
+                        children: [
+                          // Avatar
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.purple.shade400,
+                                  Colors.purple.shade600,
+                                ],
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                user.username[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // User info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.emoji_events_rounded,
+                                        size: 12,
+                                        color: Colors.amber.shade700,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        '${user.rating}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.amber.shade900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          child: Center(
-                            child: Text(
-                              user.username[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                          const SizedBox(width: 6),
+                          // Action button
+                          if (user.isFriend == true)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 12,
+                                    color: Colors.green.shade700,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Bạn',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.green.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else if (user.hasPendingRequest == true)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.schedule_rounded,
+                                    size: 12,
+                                    color: Colors.orange.shade700,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Đã gửi',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.orange.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            ElevatedButton(
+                              onPressed: () => _sendRequest(user.username),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade600,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 5,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.person_add_rounded, size: 12),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    'Kết bạn',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ),
-                        title: Text(
-                          user.username,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Container(
-                          margin: const EdgeInsets.only(top: 6),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.emoji_events_rounded,
-                                size: 14,
-                                color: Colors.amber.shade700,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${user.rating}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.amber.shade900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        trailing: user.isFriend == true
-                            ? Chip(
-                                label: const Text('Bạn bè'),
-                                backgroundColor: Colors.green.shade50,
-                                labelStyle: TextStyle(
-                                  color: Colors.green.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                avatar: Icon(
-                                  Icons.check_circle,
-                                  size: 18,
-                                  color: Colors.green.shade700,
-                                ),
-                              )
-                            : user.hasPendingRequest == true
-                            ? Chip(
-                                label: const Text('Đã gửi'),
-                                backgroundColor: Colors.orange.shade50,
-                                labelStyle: TextStyle(
-                                  color: Colors.orange.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                avatar: Icon(
-                                  Icons.schedule_rounded,
-                                  size: 18,
-                                  color: Colors.orange.shade700,
-                                ),
-                              )
-                            : ElevatedButton.icon(
-                                onPressed: () => _sendRequest(user.username),
-                                icon: const Icon(
-                                  Icons.person_add_rounded,
-                                  size: 18,
-                                ),
-                                label: const Text('Kết bạn'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue.shade600,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                ),
-                              ),
+                        ],
                       ),
                     );
                   },

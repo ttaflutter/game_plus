@@ -489,15 +489,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             borderRadius: BorderRadius.circular(20),
             onTap: () => _navigateToProfile(entry.userId),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   _buildRankBadge(entry.rank, rankColor, isTopThree, isDark),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   _buildAvatar(entry, isDark),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   Expanded(child: _buildUserInfo(entry, isDark)),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 6),
                   _buildActionButton(entry, isDark),
                 ],
               ),
@@ -517,8 +517,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         return Transform.scale(scale: value, child: child);
       },
       child: Container(
-        width: 56,
-        height: 56,
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
           gradient: isTopThree
               ? LinearGradient(
@@ -551,11 +551,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         ),
         child: Center(
           child: isTopThree
-              ? Icon(Icons.emoji_events_rounded, color: Colors.white, size: 28)
+              ? Icon(Icons.emoji_events_rounded, color: Colors.white, size: 22)
               : Text(
                   '#$rank',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white70 : Colors.grey.shade700,
                   ),
@@ -571,8 +571,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         Hero(
           tag: 'avatar_${entry.userId}',
           child: Container(
-            width: 60,
-            height: 60,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -602,7 +602,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                               entry.username[0].toUpperCase(),
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 22,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -615,7 +615,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         entry.username[0].toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -628,12 +628,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             bottom: 0,
             right: 0,
             child: Container(
-              width: 18,
-              height: 18,
+              width: 14,
+              height: 14,
               decoration: BoxDecoration(
                 color: Colors.green.shade500,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
+                border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.green.withOpacity(0.5),
@@ -650,6 +650,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   Widget _buildUserInfo(LeaderboardEntry entry, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -657,7 +658,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               child: Text(
                 entry.username,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: entry.isCurrentUser
                       ? Colors.blue.shade700
@@ -666,69 +667,56 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                       : Colors.grey.shade900,
                 ),
                 overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
             if (entry.isCurrentUser) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Colors.blue.shade600, Colors.blue.shade800],
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.shade600.withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
                   'BẠN',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
             ],
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.amber.shade300, Colors.amber.shade600],
                 ),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.amber.withOpacity(0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(5),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.star_rounded,
-                    size: 14,
+                    size: 11,
                     color: Colors.amber.shade900,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   Text(
                     '${entry.rating}',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Colors.amber.shade900,
                     ),
@@ -736,18 +724,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              '${entry.wins}W ${entry.losses}L ${entry.draws}D',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white60 : Colors.grey.shade600,
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                '${entry.wins}W ${entry.losses}L ${entry.draws}D',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white60 : Colors.grey.shade600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         _buildWinRateBar(entry.winRate, isDark),
       ],
     );
@@ -802,29 +793,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   Widget _buildActionButton(LeaderboardEntry entry, bool isDark) {
     if (entry.isCurrentUser) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.blue.shade600, Colors.blue.shade800],
           ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.shade600.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.person_rounded, size: 16, color: Colors.white),
-            SizedBox(width: 4),
+            Icon(Icons.person_rounded, size: 14, color: Colors.white),
+            SizedBox(width: 3),
             Text(
               'Bạn',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -834,29 +818,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       );
     } else if (entry.isFriend) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
           ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF4CAF50).withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.people_rounded, size: 16, color: Colors.white),
-            SizedBox(width: 4),
+            Icon(Icons.people_rounded, size: 14, color: Colors.white),
+            SizedBox(width: 3),
             Text(
               'Bạn bè',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -866,29 +843,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       );
     } else if (entry.hasPendingRequest) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.orange.shade400, Colors.orange.shade600],
           ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.orange.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.schedule_rounded, size: 16, color: Colors.white),
-            SizedBox(width: 4),
+            Icon(Icons.schedule_rounded, size: 14, color: Colors.white),
+            SizedBox(width: 3),
             Text(
               'Đã gửi',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -900,15 +870,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       return Container(
         decoration: BoxDecoration(
           color: Colors.blue.shade600.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.blue.shade600.withOpacity(0.3)),
         ),
         child: IconButton(
-          icon: const Icon(Icons.person_add_rounded, size: 20),
+          icon: const Icon(Icons.person_add_rounded, size: 18),
           color: Colors.blue.shade600,
           onPressed: () => _sendFriendRequest(entry.username),
           tooltip: 'Thêm bạn',
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           constraints: const BoxConstraints(),
         ),
       );

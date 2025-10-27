@@ -517,19 +517,6 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
                           ],
                         ),
                       ),
-
-                      // Optional: Settings icon
-                      Container(
-                        margin: EdgeInsets.only(left: isTablet ? 12 : 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),

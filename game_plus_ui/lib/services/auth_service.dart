@@ -45,6 +45,34 @@ class AuthService {
     }
   }
 
+  Future<TokenResponse> loginWithGoogle({
+    required String email,
+    required String name,
+    required String sub,
+    String? avatarUrl,
+  }) async {
+    final url = Uri.parse('$_baseUrl/api/auth/google-login');
+    final res = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        'email': email,
+        'name': name,
+        'sub': sub,
+        'avatar_url': avatarUrl,
+      }),
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      final tokenRes = TokenResponse.fromJson(data);
+      await _saveToken(tokenRes.accessToken);
+      return tokenRes;
+    } else {
+      throw Exception('Google login failed: ${res.body}');
+    }
+  }
+
   Future<UserModel> getCurrentUser() async {
     final token = await getToken();
     if (token == null) throw Exception("No token found");

@@ -141,7 +141,7 @@ class _CaroCellState extends State<CaroCell> with TickerProviderStateMixin {
               onTap: _handleTap,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.all(1),
+                margin: const EdgeInsets.all(0.5),
                 decoration: BoxDecoration(
                   color: _isHovered && widget.value.isEmpty
                       ? Colors.blue.shade50
@@ -153,10 +153,10 @@ class _CaroCellState extends State<CaroCell> with TickerProviderStateMixin {
                           )
                         : (_isHovered && widget.value.isEmpty
                               ? Colors.blue.shade300
-                              : Colors.grey.shade300),
-                    width: widget.isWinningCell ? 3 : (_isHovered ? 1.5 : 0.5),
+                              : Colors.grey.shade400),
+                    width: widget.isWinningCell ? 2.5 : 0.8,
                   ),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(2),
                   boxShadow: widget.isWinningCell
                       ? [
                           BoxShadow(
@@ -222,7 +222,7 @@ class _CaroCellState extends State<CaroCell> with TickerProviderStateMixin {
         : [Colors.red.shade700, Colors.red.shade400];
 
     return AnimatedScale(
-      scale: widget.isWinningCell ? 1.15 : 1.0,
+      scale: widget.isWinningCell ? 1.1 : 1.0,
       duration: const Duration(milliseconds: 300),
       curve: Curves.elasticOut,
       child: ShaderMask(
@@ -238,15 +238,15 @@ class _CaroCellState extends State<CaroCell> with TickerProviderStateMixin {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w900,
-            fontSize: widget.isWinningCell ? 26 : 22,
+            fontSize: widget.isWinningCell ? 16 : 14,
             shadows: [
               Shadow(
                 color: symbolColor.withOpacity(0.5),
-                blurRadius: 4,
+                blurRadius: 3,
                 offset: const Offset(1, 1),
               ),
               if (widget.isWinningCell)
-                Shadow(color: Colors.amber.shade400, blurRadius: 10),
+                Shadow(color: Colors.amber.shade400, blurRadius: 8),
             ],
           ),
         ),

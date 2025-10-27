@@ -175,7 +175,7 @@ class _CaroScreenState extends State<CaroScreen> {
             Expanded(
               child: Container(
                 color: Colors.grey.shade100,
-                child: const CaroBoard(),
+                child: const Center(child: CaroBoard()),
               ),
             ),
 
@@ -197,7 +197,7 @@ class _CaroScreenState extends State<CaroScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blue.shade600, Colors.blue.shade500],
@@ -216,21 +216,21 @@ class _CaroScreenState extends State<CaroScreen> {
                   // Timer ring (nếu là lượt đối thủ)
                   if (isOpponentTurn && controller.timeLeft != null)
                     SizedBox(
-                      width: 64,
-                      height: 64,
+                      width: 52,
+                      height: 52,
                       child: CircularProgressIndicator(
                         value:
                             controller.timeLeft! /
                             (controller.initialTimeLeft ?? 30),
-                        strokeWidth: 3,
+                        strokeWidth: 2.5,
                         backgroundColor: Colors.white.withOpacity(0.3),
                         valueColor: const AlwaysStoppedAnimation(Colors.white),
                       ),
                     ),
                   // Avatar
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
@@ -238,30 +238,33 @@ class _CaroScreenState extends State<CaroScreen> {
                     ),
                     child: const Icon(
                       Icons.person,
-                      size: 32,
+                      size: 24,
                       color: Colors.grey,
                     ),
                   ),
                   // Symbol badge
                   Positioned(
-                    bottom: 0,
-                    right: 0,
+                    bottom: -1,
+                    right: -1,
                     child: Container(
-                      width: 24,
-                      height: 24,
+                      width: 18,
+                      height: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.red.shade500,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                       child: Center(
                         child: Text(
                           opponentSymbol,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
+                            height: 1.0,
+                            letterSpacing: 0,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -269,38 +272,39 @@ class _CaroScreenState extends State<CaroScreen> {
                 ],
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
               // Name & Rating
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       opponentName.toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                        letterSpacing: 0.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Row(
                       children: [
                         const Icon(
                           Icons.emoji_events,
                           color: Colors.amber,
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
                           '$opponentRating',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -314,18 +318,18 @@ class _CaroScreenState extends State<CaroScreen> {
               if (isOpponentTurn && controller.timeLeft != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     _formatTime(controller.timeLeft!),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -333,9 +337,9 @@ class _CaroScreenState extends State<CaroScreen> {
 
               // Online indicator
               Container(
-                margin: const EdgeInsets.only(left: 8),
-                width: 12,
-                height: 12,
+                margin: const EdgeInsets.only(left: 6),
+                width: 10,
+                height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.green.shade400,
@@ -348,18 +352,18 @@ class _CaroScreenState extends State<CaroScreen> {
           // Turn indicator
           if (isOpponentTurn)
             Container(
-              margin: const EdgeInsets.only(top: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white, width: 1),
               ),
               child: Text(
                 'Lượt đối thủ',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -378,7 +382,7 @@ class _CaroScreenState extends State<CaroScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blue.shade600, Colors.blue.shade500],
@@ -391,18 +395,18 @@ class _CaroScreenState extends State<CaroScreen> {
           // Turn indicator
           if (isMyTurn)
             Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white, width: 1),
               ),
               child: Text(
                 'Lượt của bạn',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -417,21 +421,21 @@ class _CaroScreenState extends State<CaroScreen> {
                   // Timer ring (nếu là lượt mình)
                   if (isMyTurn && controller.timeLeft != null)
                     SizedBox(
-                      width: 64,
-                      height: 64,
+                      width: 52,
+                      height: 52,
                       child: CircularProgressIndicator(
                         value:
                             controller.timeLeft! /
                             (controller.initialTimeLeft ?? 30),
-                        strokeWidth: 3,
+                        strokeWidth: 2.5,
                         backgroundColor: Colors.white.withOpacity(0.3),
                         valueColor: const AlwaysStoppedAnimation(Colors.white),
                       ),
                     ),
                   // Avatar
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
@@ -439,30 +443,33 @@ class _CaroScreenState extends State<CaroScreen> {
                     ),
                     child: const Icon(
                       Icons.person,
-                      size: 32,
+                      size: 24,
                       color: Colors.grey,
                     ),
                   ),
                   // Symbol badge
                   Positioned(
-                    bottom: 0,
-                    right: 0,
+                    bottom: -1,
+                    right: -1,
                     child: Container(
-                      width: 24,
-                      height: 24,
+                      width: 18,
+                      height: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.blue.shade700,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                       child: Center(
                         child: Text(
                           mySymbol,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
+                            height: 1.0,
+                            letterSpacing: 0,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -470,38 +477,39 @@ class _CaroScreenState extends State<CaroScreen> {
                 ],
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
               // Name & Rating
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       myName.toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                        letterSpacing: 0.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Row(
                       children: [
                         const Icon(
                           Icons.emoji_events,
                           color: Colors.amber,
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
                           '$myRating',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -515,24 +523,24 @@ class _CaroScreenState extends State<CaroScreen> {
               if (isMyTurn && controller.timeLeft != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     _formatTime(controller.timeLeft!),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
 
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
 
               // Action buttons
               Row(
@@ -548,13 +556,13 @@ class _CaroScreenState extends State<CaroScreen> {
                         ? controller.unreadMessageCount
                         : null,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   // Menu button
                   _buildActionButton(
                     icon: Icons.menu,
                     onTap: () => _showMenuBottomSheet(controller),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   // Settings button
                   _buildActionButton(
                     icon: Icons.settings,
@@ -580,15 +588,15 @@ class _CaroScreenState extends State<CaroScreen> {
       children: [
         Material(
           color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 48,
-              height: 48,
+              width: 40,
+              height: 40,
               alignment: Alignment.center,
-              child: Icon(icon, color: Colors.white, size: 24),
+              child: Icon(icon, color: Colors.white, size: 20),
             ),
           ),
         ),
@@ -597,17 +605,17 @@ class _CaroScreenState extends State<CaroScreen> {
             top: -4,
             right: -4,
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(3),
               decoration: const BoxDecoration(
                 color: Colors.red,
                 shape: BoxShape.circle,
               ),
-              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               child: Text(
                 badge > 9 ? '9+' : '$badge',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,

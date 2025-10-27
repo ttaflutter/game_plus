@@ -15,7 +15,7 @@ class CaroBoard extends StatelessWidget {
       child: Container(
         color: Colors.white,
         child: GridView.builder(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(2),
           physics: const NeverScrollableScrollPhysics(),
           itemCount: controller.rows * controller.cols,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

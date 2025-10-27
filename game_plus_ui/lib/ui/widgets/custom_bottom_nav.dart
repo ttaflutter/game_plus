@@ -74,7 +74,7 @@ class CustomBottomNav extends StatelessWidget {
     return SafeArea(
       child: Container(
         margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -114,7 +114,7 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
               ? Colors.blue.shade600.withOpacity(0.12)
@@ -126,10 +126,10 @@ class _NavItem extends StatelessWidget {
           children: [
             AnimatedScale(
               duration: const Duration(milliseconds: 200),
-              scale: isActive ? 1.2 : 1.0,
+              scale: isActive ? 1.15 : 1.0,
               child: Icon(
                 icon,
-                size: 22,
+                size: 20,
                 color: isActive ? Colors.blue.shade600 : Colors.grey.shade400,
               ),
             ),
@@ -137,7 +137,7 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 color: isActive ? Colors.blue.shade600 : Colors.grey.shade400,
               ),
