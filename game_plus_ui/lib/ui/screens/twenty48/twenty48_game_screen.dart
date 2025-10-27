@@ -205,12 +205,22 @@ class _Twenty48GameScreenState extends State<Twenty48GameScreen>
                         Icons.arrow_back_ios_new_rounded,
                         () => Navigator.pop(context),
                       ),
-                      Row(
-                        children: [
-                          _badge('HARD MODE', widget.difficulty.toUpperCase()),
-                          const SizedBox(width: 10),
-                          _badge('ALL TIME', '$best', crown: true),
-                        ],
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: _badge(
+                                'MODE',
+                                widget.difficulty.toUpperCase(),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: _badge('BEST', '$best', crown: true),
+                            ),
+                          ],
+                        ),
                       ),
                       _roundIcon(Icons.refresh_rounded, _restart),
                     ],
@@ -342,8 +352,10 @@ class _Twenty48GameScreenState extends State<Twenty48GameScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (crown) ...[
                 const Icon(
@@ -353,12 +365,16 @@ class _Twenty48GameScreenState extends State<Twenty48GameScreen>
                 ),
                 const SizedBox(width: 6),
               ],
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .6,
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .6,
+                    fontSize: 11,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

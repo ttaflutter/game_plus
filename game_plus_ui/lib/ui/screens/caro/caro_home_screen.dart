@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:game_plus/models/user_model.dart';
-import 'package:game_plus/ui/screens/caro/caro_playing_screen.dart';
-import 'package:game_plus/ui/screens/caro/caro_matching_screen.dart';
-import 'package:game_plus/ui/screens/caro/room_lobby_screen.dart';
+import 'package:game_plus/ui/screens/caro/play/caro_playing_screen.dart';
+import 'package:game_plus/ui/screens/caro/play/caro_matching_screen.dart';
+import 'package:game_plus/ui/screens/caro/room/room_lobby_screen.dart';
+import 'package:game_plus/ui/screens/caro/auth/login_screen.dart';
 import 'package:game_plus/ui/widgets/custom_bottom_nav.dart';
 import 'package:provider/provider.dart';
 import 'package:game_plus/game/caro/caro_controller.dart';
@@ -41,7 +42,7 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
             curve: Curves.easeOutCubic,
           ),
         );
-    _loadUserData();
+    _checkLoginAndLoadData();
   }
 
   @override
@@ -50,19 +51,42 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
     super.dispose();
   }
 
-  Future<void> _loadUserData() async {
+  Future<void> _checkLoginAndLoadData() async {
+    // Check xem đã đăng nhập chưa
+    final token = await AuthService.getToken();
+
+    if (token == null || token.isEmpty) {
+      // Chưa đăng nhập → chuyển về LoginScreen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+      return;
+    }
+
+    // Đã đăng nhập → load user data
     try {
-      final authService = AuthService();
-      final user = await authService.getCurrentUser();
+      final user = await AuthService().getCurrentUser();
       print("🔍 Loaded user: ${user.username}, Rating: ${user.rating}");
       if (mounted) {
         setState(() {
           _currentUser = user;
         });
-        _animationController.forward();
       }
     } catch (e) {
       print("❌ Error loading user: $e");
+      // Token không hợp lệ hoặc hết hạn → xóa và quay về LoginScreen
+      await AuthService().logout();
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+      return;
+    } finally {
       if (mounted) {
         _animationController.forward();
       }
@@ -132,6 +156,13 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _handleRoomPlay() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RoomLobbyScreen()),
+    );
   }
 
   @override
@@ -614,14 +645,7 @@ class _CaroHomeScreenState extends State<CaroHomeScreen>
                     _buildModernButton(
                       text: 'PHÒNG CHƠI',
                       icon: Icons.people_rounded,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RoomLobbyScreen(),
-                          ),
-                        );
-                      },
+                      onPressed: _handleRoomPlay,
                       isPrimary: false,
                       isTablet: isTablet,
                     ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../models/room_model.dart';
-import '../../../services/room_service.dart';
+import '../../../../models/room_model.dart';
+import '../../../../services/room_service.dart';
 import 'room_waiting_screen.dart';
 
 class CreateRoomScreen extends StatefulWidget {

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../models/match_history_model.dart';
-import '../../../services/match_history_service.dart';
+import '../../../../models/match_history_model.dart';
+import '../../../../services/match_history_service.dart';
 
 class MatchDetailScreen extends StatefulWidget {
   final int matchId;

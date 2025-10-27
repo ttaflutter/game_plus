@@ -24,7 +24,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
 
   # Icon iOS style
   cupertino_icons: ^1.0.8
@@ -39,9 +38,6 @@ dependencies:
 
   # Âm thanh / nhạc nền / click
   audioplayers: ^5.2.1
-
-  # Lưu cài đặt local (volume, theme, language, ...)
-  shared_preferences: ^2.3.2
 
   # Animation mượt + hero transition nâng cao
   flutter_animate: ^4.5.0

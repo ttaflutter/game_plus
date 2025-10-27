@@ -436,27 +436,33 @@ class _SudokuGameScreenState extends State<SudokuGameScreen>
                               Icons.arrow_back_ios_new_rounded,
                               onTap: () => Navigator.pop(context),
                             ),
-                            Row(
-                              children: [
-                                Transform.scale(
-                                  scale: 0.85, // ↓ nhỏ ~15%
-                                  child: _TopBadge(
-                                    title: 'CURRENT STREAK',
-                                    value: '$_streak',
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Transform.scale(
+                                      scale: 0.85,
+                                      child: _TopBadge(
+                                        title: 'STREAK',
+                                        value: '$_streak',
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Transform.scale(
-                                  scale: 0.85,
-                                  child: _TopBadge(
-                                    title: 'ALL TIME',
-                                    value: '$_best',
-                                    crown: true,
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Transform.scale(
+                                      scale: 0.85,
+                                      child: _TopBadge(
+                                        title: 'BEST',
+                                        value: '$_best',
+                                        crown: true,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-
                             _roundIcon(
                               Icons.refresh_rounded,
                               onTap: _resetGame,
@@ -607,23 +613,37 @@ class _SudokuGameScreenState extends State<SudokuGameScreen>
                 // ======= KEYPAD =======
                 Container(
                   color: blue,
-                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(9, (i) {
-                      final n = i + 1;
-                      final isCand = (engine.board.get(selR, selC) == 0)
-                          ? engine.candidatesAt(selR, selC).contains(n)
-                          : false;
-                      final opacity = (engine.board.get(selR, selC) != 0)
-                          ? 0.30
-                          : (isCand ? 1.0 : 0.28);
-                      return _Key(
-                        label: '$n',
-                        onTap: () => _onNumber(n),
-                        opacity: opacity,
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Tính toán width cho mỗi key để fit màn hình
+                      final availableWidth = constraints.maxWidth;
+                      final spacing = 4.0; // Spacing giữa các key
+                      final totalSpacing =
+                          spacing * 8; // 8 khoảng cách giữa 9 keys
+                      final keyWidth = (availableWidth - totalSpacing) / 9;
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(9, (i) {
+                          final n = i + 1;
+                          final isCand = (engine.board.get(selR, selC) == 0)
+                              ? engine.candidatesAt(selR, selC).contains(n)
+                              : false;
+                          final opacity = (engine.board.get(selR, selC) != 0)
+                              ? 0.30
+                              : (isCand ? 1.0 : 0.28);
+                          return SizedBox(
+                            width: keyWidth,
+                            child: _Key(
+                              label: '$n',
+                              onTap: () => _onNumber(n),
+                              opacity: opacity,
+                            ),
+                          );
+                        }),
                       );
-                    }),
+                    },
                   ),
                 ),
               ],
@@ -868,7 +888,6 @@ class _Key extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 40,
           height: 56,
           alignment: Alignment.center,
           decoration: BoxDecoration(
@@ -900,12 +919,10 @@ class _TopBadge extends StatelessWidget {
   final String title;
   final String value;
   final bool crown;
-  final IconData? icon;
   const _TopBadge({
     required this.title,
     required this.value,
     this.crown = false,
-    this.icon,
   });
   @override
   Widget build(BuildContext context) {
@@ -916,8 +933,10 @@ class _TopBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (crown) ...[
                 const Icon(
@@ -927,16 +946,16 @@ class _TopBadge extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
               ],
-              if (icon != null) ...[
-                Icon(icon, color: Colors.white70, size: 16),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .6,
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .6,
+                    fontSize: 11,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

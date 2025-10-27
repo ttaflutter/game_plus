@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../models/room_model.dart';
-import '../../../services/room_service.dart';
-import '../../../services/auth_service.dart';
-import '../../../game/caro/caro_controller.dart';
-import 'caro_playing_screen.dart';
+import '../../../../models/room_model.dart';
+import '../../../../services/room_service.dart';
+import '../../../../services/auth_service.dart';
+import '../../../../game/caro/caro_controller.dart';
+import '../play/caro_playing_screen.dart';
 
 class RoomWaitingScreen extends StatefulWidget {
   final RoomDetail roomDetail;
@@ -526,9 +526,13 @@ class _RoomWaitingScreenState extends State<RoomWaitingScreen>
   }
 
   Widget _buildRoomInfoCard() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isVerySmallScreen = screenWidth < 360;
+    final isSmallScreen = screenWidth < 400;
+
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isVerySmallScreen ? 12 : 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blue.shade600, Colors.blue.shade800],
@@ -547,43 +551,59 @@ class _RoomWaitingScreenState extends State<RoomWaitingScreen>
           // Room Code
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.vpn_key_rounded, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              const Text(
+              Icon(
+                Icons.vpn_key_rounded,
+                color: Colors.white,
+                size: isVerySmallScreen ? 20 : 24,
+              ),
+              SizedBox(width: isVerySmallScreen ? 6 : 12),
+              Text(
                 'MÃ PHÒNG:',
                 style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 14,
+                  fontSize: isVerySmallScreen ? 12 : 14,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
+                  letterSpacing: isVerySmallScreen ? 0.5 : 1.2,
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _room.roomCode,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
+              SizedBox(width: isVerySmallScreen ? 6 : 12),
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isVerySmallScreen ? 10 : 16,
+                    vertical: isVerySmallScreen ? 6 : 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _room.roomCode,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isVerySmallScreen
+                          ? 18
+                          : (isSmallScreen ? 20 : 24),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: isVerySmallScreen ? 1.5 : 3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: isVerySmallScreen ? 4 : 8),
               IconButton(
                 onPressed: _copyRoomCode,
-                icon: const Icon(Icons.copy_rounded, color: Colors.white),
+                icon: Icon(
+                  Icons.copy_rounded,
+                  color: Colors.white,
+                  size: isVerySmallScreen ? 20 : 24,
+                ),
                 tooltip: 'Copy mã',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ],
           ),
@@ -997,7 +1017,9 @@ class _RoomWaitingScreenState extends State<RoomWaitingScreen>
   }
 
   Widget _buildPreparingOverlay() {
+    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final isVerySmallScreen = screenWidth < 360;
     final isSmallScreen = screenHeight < 600;
 
     return Container(
@@ -1180,8 +1202,8 @@ class _RoomWaitingScreenState extends State<RoomWaitingScreen>
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 32),
               padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen ? 16 : 24,
-                vertical: isSmallScreen ? 12 : 16,
+                horizontal: isSmallScreen ? 12 : 24,
+                vertical: isSmallScreen ? 10 : 16,
               ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.15),
@@ -1197,18 +1219,22 @@ class _RoomWaitingScreenState extends State<RoomWaitingScreen>
                   Icon(
                     Icons.lightbulb_outline,
                     color: Colors.amber.shade300,
-                    size: isSmallScreen ? 20 : 24,
+                    size: isSmallScreen ? 18 : 24,
                   ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  SizedBox(width: isSmallScreen ? 6 : 12),
                   Flexible(
                     child: Text(
-                      'Mẹo: Chiếm trung tâm bàn cờ để có lợi thế!',
+                      isVerySmallScreen
+                          ? 'Chiếm trung tâm!'
+                          : 'Mẹo: Chiếm trung tâm bàn cờ để có lợi thế!',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
-                        fontSize: isSmallScreen ? 13 : 14,
+                        fontSize: isSmallScreen ? 12 : 14,
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                 ],

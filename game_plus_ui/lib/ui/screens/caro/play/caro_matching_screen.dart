@@ -844,6 +844,9 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
     double iconSize,
     double fontSize,
   ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isVerySmallScreen = screenWidth < 360;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -1018,8 +1021,8 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
           // Tips or messages
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 16 : 24,
-              vertical: isSmallScreen ? 12 : 16,
+              horizontal: isSmallScreen ? 12 : 24,
+              vertical: isSmallScreen ? 10 : 16,
             ),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.15),
@@ -1035,18 +1038,22 @@ class _CaroMatchingScreenState extends State<CaroMatchingScreen>
                 Icon(
                   Icons.lightbulb_outline,
                   color: Colors.amber.shade300,
-                  size: isSmallScreen ? 20 : 24,
+                  size: isSmallScreen ? 18 : 24,
                 ),
-                SizedBox(width: isSmallScreen ? 8 : 12),
+                SizedBox(width: isSmallScreen ? 6 : 12),
                 Flexible(
                   child: Text(
-                    'Mẹo: Chiếm trung tâm bàn cờ để có lợi thế!',
+                    isVerySmallScreen
+                        ? 'Chiếm trung tâm!'
+                        : 'Mẹo: Chiếm trung tâm bàn cờ!',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                      fontSize: isSmallScreen ? 13 : 14,
+                      fontSize: isSmallScreen ? 12 : 14,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],

@@ -349,25 +349,32 @@ class _CaroScreenState extends State<CaroScreen> {
             ],
           ),
 
-          // Turn indicator
-          if (isOpponentTurn)
-            Container(
-              margin: const EdgeInsets.only(top: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white, width: 1),
-              ),
-              child: Text(
-                'Lượt đối thủ',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          // Turn indicator - LUÔN HIỂN THỊ ĐỂ GIỮ LAYOUT CỐ ĐỊNH
+          Container(
+            height: 28, // Cố định chiều cao
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isOpponentTurn
+                  ? Colors.white.withOpacity(0.2)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              border: isOpponentTurn
+                  ? Border.all(color: Colors.white, width: 1)
+                  : null,
             ),
+            alignment: Alignment.center,
+            child: isOpponentTurn
+                ? const Text(
+                    'Lượt đối thủ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -392,25 +399,32 @@ class _CaroScreenState extends State<CaroScreen> {
       ),
       child: Column(
         children: [
-          // Turn indicator
-          if (isMyTurn)
-            Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white, width: 1),
-              ),
-              child: Text(
-                'Lượt của bạn',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          // Turn indicator - LUÔN HIỂN THỊ ĐỂ GIỮ LAYOUT CỐ ĐỊNH
+          Container(
+            height: 28, // Cố định chiều cao
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isMyTurn
+                  ? Colors.white.withOpacity(0.2)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              border: isMyTurn
+                  ? Border.all(color: Colors.white, width: 1)
+                  : null,
             ),
+            alignment: Alignment.center,
+            child: isMyTurn
+                ? const Text(
+                    'Lượt của bạn',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
 
           Row(
             children: [

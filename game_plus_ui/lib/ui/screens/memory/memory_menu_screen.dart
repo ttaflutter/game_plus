@@ -8,7 +8,7 @@ import 'package:game_plus/configs/memory_difficulty.dart';
 // Enum cũ 3 mức của các game khác (alias: legacy)
 import 'package:game_plus/configs/difficulty.dart' as legacy;
 
-import 'package:game_plus/ui/screens/memory_game_screen.dart';
+import 'package:game_plus/ui/screens/memory/memory_game_screen.dart';
 
 class MemoryMenuScreen extends StatefulWidget {
   const MemoryMenuScreen({super.key});

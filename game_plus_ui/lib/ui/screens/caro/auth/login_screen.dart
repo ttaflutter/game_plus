@@ -5,6 +5,7 @@ import 'package:game_plus/schemas/auth_schemas.dart';
 import 'package:game_plus/services/auth_service.dart';
 import 'package:game_plus/services/google_auth_service.dart';
 import 'package:game_plus/ui/screens/caro/caro_home_screen.dart';
+import 'package:game_plus/ui/screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'register_screen.dart';
 
@@ -67,6 +68,7 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
+      print("🔑 Starting login process...");
       final service = AuthService();
       final tokenRes = await service.login(
         LoginRequest(
@@ -75,19 +77,49 @@ class _LoginScreenState extends State<LoginScreen>
         ),
       );
 
+      print("✅ Login successful! Token received.");
+
       // Lưu user info tạm
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("username", tokenRes.user.username);
 
       if (mounted) {
+        // Đăng nhập thành công, vào CaroHomeScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const CaroHomeScreen()),
         );
       }
     } catch (e) {
+      print("❌ Login error: $e");
+      print("❌ Error type: ${e.runtimeType}");
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
+        // Xử lý các loại lỗi khác nhau
+        String errorMessage = e.toString();
+
+        if (errorMessage.contains('Login failed')) {
+          // Parse JSON error từ backend
+          try {
+            final errorJson = errorMessage.split('Login failed: ')[1];
+            if (errorJson.contains('Invalid credentials') ||
+                errorJson.contains('email') ||
+                errorJson.contains('password')) {
+              _error = 'Email hoặc mật khẩu không đúng';
+            } else if (errorJson.contains('NotInitializedError')) {
+              _error =
+                  'Lỗi server: Database chưa được khởi tạo. Vui lòng liên hệ admin.';
+            } else {
+              _error = 'Đăng nhập thất bại. Vui lòng thử lại.';
+            }
+          } catch (_) {
+            _error = 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin.';
+          }
+        } else if (errorMessage.contains('SocketException') ||
+            errorMessage.contains('Failed host lookup')) {
+          _error = 'Không thể kết nối đến server. Kiểm tra kết nối mạng.';
+        } else {
+          _error = errorMessage.replaceAll('Exception: ', '');
+        }
       });
     } finally {
       if (mounted) {
@@ -113,6 +145,7 @@ class _LoginScreenState extends State<LoginScreen>
       await prefs.setString("username", tokenRes.user.username);
 
       if (mounted) {
+        // Đăng nhập thành công, vào CaroHomeScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const CaroHomeScreen()),
@@ -169,45 +202,50 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight:
-                    screenHeight -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
-              ),
-              child: IntrinsicHeight(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 24 : 40,
-                      vertical: 40,
-                    ),
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: Container(
-                          constraints: BoxConstraints(maxWidth: maxWidth),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Logo & Title
-                              _buildHeader(isSmallScreen),
+          child: Stack(
+            children: [
+              // Main content
+              SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight:
+                        screenHeight -
+                        MediaQuery.of(context).padding.top -
+                        MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 24 : 40,
+                          vertical: 40,
+                        ),
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: Container(
+                              constraints: BoxConstraints(maxWidth: maxWidth),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Logo & Title
+                                  _buildHeader(isSmallScreen),
 
-                              SizedBox(height: isSmallScreen ? 32 : 48),
+                                  SizedBox(height: isSmallScreen ? 32 : 48),
 
-                              // Login Card
-                              _buildLoginCard(isSmallScreen),
+                                  // Login Card
+                                  _buildLoginCard(isSmallScreen),
 
-                              SizedBox(height: isSmallScreen ? 24 : 32),
+                                  SizedBox(height: isSmallScreen ? 24 : 32),
 
-                              // Register link
-                              _buildRegisterLink(),
-                            ],
+                                  // Register link
+                                  _buildRegisterLink(),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -215,7 +253,38 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
               ),
-            ),
+
+              // Nút Back - Đặt sau để nằm trên cùng
+              Positioned(
+                top: 16,
+                left: 16,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        (route) => false,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

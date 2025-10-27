@@ -14,10 +14,10 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../models/room_model.dart';
-import '../../../services/room_service.dart';
-import '../../../services/room_websocket_manager.dart';
-import '../../widgets/custom_sliver_app_bar.dart';
+import '../../../../models/room_model.dart';
+import '../../../../services/room_service.dart';
+import '../../../../services/room_websocket_manager.dart';
+import '../../../widgets/custom_sliver_app_bar.dart';
 import 'create_room_screen.dart';
 import 'room_waiting_screen.dart';
 
@@ -390,7 +390,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen>
                     const SizedBox(width: 8),
                     Text(
                       _wsManager.isConnected
-                          ? 'Đang kết nối real-time'
+                          ? 'Đang kết nối'
                           : 'Đang kết nối lại...',
                       style: TextStyle(
                         fontSize: 12,

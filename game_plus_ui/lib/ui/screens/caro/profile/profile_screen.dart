@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:game_plus/ui/screens/history/match_history_screen.dart';
+import 'package:game_plus/ui/screens/caro/history/match_history_screen.dart';
+import 'package:game_plus/ui/screens/home_screen.dart';
 import 'package:intl/intl.dart';
-import '../../../models/profile_model.dart';
-import '../../../services/profile_service.dart';
-import '../../widgets/custom_bottom_nav.dart';
+import '../../../../models/profile_model.dart';
+import '../../../../services/profile_service.dart';
+import '../../../widgets/custom_bottom_nav.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
 import 'settings_screen.dart';
@@ -934,6 +935,19 @@ class _ProfileScreenState extends State<ProfileScreen>
           title: 'Đăng Xuất',
           isDanger: true,
           onTap: _confirmLogout,
+          isTablet: isTablet,
+        ),
+        _buildMenuItem(
+          icon: Icons.close_fullscreen,
+          title: 'Quay về GamePlus',
+          isDanger: true,
+          onTap: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              (route) => false,
+            );
+          },
           isTablet: isTablet,
         ),
       ],

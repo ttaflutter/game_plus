@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:game_plus/ui/widgets/custom_bottom_nav.dart';
 import 'package:game_plus/ui/widgets/custom_sliver_app_bar.dart';
 import 'package:intl/intl.dart';
-import '../../../models/match_history_model.dart';
-import '../../../services/match_history_service.dart';
+import '../../../../models/match_history_model.dart';
+import '../../../../services/match_history_service.dart';
 import 'match_detail_screen.dart';
 
 class MatchHistoryScreen extends StatefulWidget {

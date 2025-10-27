@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:game_plus/services/friend_service.dart';
 import 'package:game_plus/models/friend_model.dart';
-import 'package:game_plus/ui/screens/profile/user_profile_screen.dart';
+import 'package:game_plus/ui/screens/caro/profile/user_profile_screen.dart';
 import 'package:game_plus/ui/widgets/custom_bottom_nav.dart';
 import 'package:game_plus/ui/widgets/custom_sliver_app_bar.dart';
 

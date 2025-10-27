@@ -29,11 +29,17 @@ class AuthService {
 
   Future<TokenResponse> login(LoginRequest req) async {
     final url = Uri.parse('$_baseUrl/api/auth/login');
+    print('🔵 Sending login request to: $url');
+    print('📧 Email: ${req.email}');
+
     final res = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(req.toJson()),
     );
+
+    print('📥 Response status: ${res.statusCode}');
+    print('📥 Response body: ${res.body}');
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
@@ -41,6 +47,7 @@ class AuthService {
       await _saveToken(tokenRes.accessToken);
       return tokenRes;
     } else {
+      print('❌ Login failed with status ${res.statusCode}');
       throw Exception('Login failed: ${res.body}');
     }
   }

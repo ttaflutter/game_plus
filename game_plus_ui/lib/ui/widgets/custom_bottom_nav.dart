@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:game_plus/ui/screens/profile/profile_screen.dart';
+import 'package:game_plus/ui/screens/caro/profile/profile_screen.dart';
 import 'package:game_plus/ui/screens/caro/caro_home_screen.dart';
-import 'package:game_plus/ui/screens/leaderboard/leaderboard_screen.dart';
+import 'package:game_plus/ui/screens/caro/leaderboard/leaderboard_screen.dart';
 import 'package:game_plus/ui/widgets/page_transition.dart';
-import 'package:game_plus/ui/screens/friends/friends_screen.dart';
-import 'package:game_plus/ui/screens/history/match_history_screen.dart';
+import 'package:game_plus/ui/screens/caro/friends/friends_screen.dart';
+import 'package:game_plus/ui/screens/caro/history/match_history_screen.dart';
 
 class CustomBottomNav extends StatelessWidget {
   final int currentIndex;
