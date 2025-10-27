@@ -3,6 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  audioplayers_linux
+  dynamic_color
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

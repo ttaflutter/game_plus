@@ -21,18 +21,12 @@ version: 1.0.0+1
 environment:
   sdk: ^3.9.2
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
+    
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  # Icon iOS style
   cupertino_icons: ^1.0.8
   web_socket_channel: ^3.0.3
   provider: ^6.0.5
@@ -43,21 +37,35 @@ dependencies:
   dio: ^5.9.0
   google_sign_in: ^6.2.1
 
+  # Âm thanh / nhạc nền / click
+  audioplayers: ^5.2.1
+
+  # Lưu cài đặt local (volume, theme, language, ...)
+  shared_preferences: ^2.3.2
+
+  # Animation mượt + hero transition nâng cao
+  flutter_animate: ^4.5.0
+
+  # Hiệu ứng chuyển trang đẹp (fade, slide, scale,…)
+  page_transition: ^2.1.0
+
+  # Điều khiển độ sáng / dark mode (nếu muốn thêm)
+  dynamic_color: ^1.7.0
+
+  # Hiển thị icon vector (SVG)
+  flutter_svg: ^2.0.10+1
+
+  # Thư viện hỗ trợ UI bo tròn, bóng đẹp, responsive
+  flutter_screenutil: ^5.9.0
+
+  # Hiệu ứng rung thiết bị
+  vibration: ^2.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
