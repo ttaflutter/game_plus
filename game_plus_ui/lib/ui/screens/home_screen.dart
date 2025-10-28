@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:game_plus/ui/screens/caro/auth/login_screen.dart';
 import 'package:game_plus/ui/screens/caro/caro_home_screen.dart';
 import 'package:game_plus/ui/screens/memory/memory_menu_screen.dart';
+import 'package:game_plus/ui/screens/snake/snake_play_screen.dart';
 import 'package:game_plus/ui/screens/sudoku/sudoku_game_screen.dart';
 import 'package:game_plus/ui/screens/twenty48/twenty48_game_screen.dart';
 import 'package:game_plus/configs/difficulty.dart';
@@ -33,6 +34,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       'favorite': true,
       'screen': const CaroHomeScreen(),
+    },
+    {
+      'title': 'RẮN SĂN MỒI',
+      'subtitle': '...',
+      'image': 'assets/images/snake.png',
+      'color': const Color(0xFF4A90E2),
+      'gradient': const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color.fromARGB(255, 0, 168, 28),
+          Color.fromARGB(255, 91, 248, 0),
+        ],
+      ),
+      'favorite': true,
+      'screen': const SnakePlayScreen(),
     },
     {
       'title': 'MEMORY',
