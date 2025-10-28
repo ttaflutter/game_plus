@@ -5,6 +5,7 @@ import 'package:game_plus/ui/widgets/caro/caro_surrender_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:game_plus/game/caro/caro_controller.dart';
 import 'package:game_plus/game/caro/caro_board.dart';
+import 'package:game_plus/ui/screens/caro/caro_home_screen.dart';
 
 class CaroScreen extends StatefulWidget {
   const CaroScreen({super.key});
@@ -145,11 +146,13 @@ class _CaroScreenState extends State<CaroScreen> {
               // Disconnect và về home
               _controller?.disconnect();
 
-              // Đợi 1 frame rồi mới pop
+              // Clear navigation stack and make CaroHomeScreen the new root
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
-                  // Pop tất cả cho đến home screen
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const CaroHomeScreen()),
+                    (route) => false,
+                  );
                 }
               });
             },
@@ -690,9 +693,15 @@ class _CaroScreenState extends State<CaroScreen> {
               leading: const Icon(Icons.exit_to_app, color: Colors.red),
               title: const Text('Thoát trận'),
               onTap: () {
+                // Close the bottom sheet first
                 Navigator.pop(context);
+                // Disconnect controller/network
                 controller.disconnect();
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                // Clear the entire navigation stack and set CaroHomeScreen as new root
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const CaroHomeScreen()),
+                  (route) => false,
+                );
               },
             ),
             const SizedBox(height: 20),

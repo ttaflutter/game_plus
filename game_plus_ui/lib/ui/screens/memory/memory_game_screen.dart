@@ -78,9 +78,7 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
   final Map<int, Set<int>> _botSeen = {};
 
   // hủy hành động bot (cancel token)
-  int _botGen = 0;
-
-  // layout (để animate bay ra giữa)
+  int _botGen = 0; // layout (để animate bay ra giữa)
   Size _boardSize = Size.zero;
   List<Rect> _cardRects = const [];
 
@@ -126,7 +124,7 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
     _deck = _buildDeck(pairs);
     _pairsLeft = pairs;
     _you = _opponent = 0;
-    _turn = 0;
+    _turn = _isBot ? 1 : 0; // bot đi trước nếu chơi với bot
     _pickedA = null;
     _lock = false;
     _botSeen.clear();
@@ -199,10 +197,21 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
   }
 
   // ---------------- GAME FLOW ----------------
+  // Public tap method used by human player taps. This cancels any pending
+  // bot actions (so human interrupts bot), then delegates to the internal
+  // handler which contains the shared game logic.
   Future<void> _onTap(int i) async {
     if (_lock || _flying) return;
     // Hủy mọi tác vụ bot đang chờ (người chơi thao tác)
     _botGen++;
+    await _onTapInternal(i);
+  }
+
+  // Internal tap handler that performs the actual flip/match logic.
+  // This can be called by the bot without incrementing _botGen so the bot
+  // doesn't cancel its own queued actions.
+  Future<void> _onTapInternal(int i) async {
+    if (_lock || _flying) return;
 
     if (_deck[i].isMatched || _deck[i].isFaceUp) return;
     _flipUp(i);
@@ -244,7 +253,11 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
         _showWinOverlay(); // chỉ show khi người chơi thắng (check bên trong)
         return;
       }
-      if (_isBot && _turn == 1) _queueBot();
+      // Khi bot match -> bot vẫn lượt tiếp
+      // Phải queue bot mới với token mới để tiếp tục
+      if (_isBot && _turn == 1) {
+        _queueBot();
+      }
     } else {
       await Future.delayed(const Duration(milliseconds: 260));
       _flipDown(a);
@@ -261,8 +274,8 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
     _lock = false;
     setState(() {});
     _playTurnBanner();
-    // đổi lượt -> hủy bot cũ và xếp bot mới nếu cần
-    _botGen++;
+    // đổi lượt -> xếp bot mới nếu cần (không increment _botGen ở đây
+    // vì _queueBot() sẽ snapshot token hiện tại)
     if (_isBot && _turn == 1) _queueBot();
   }
 
@@ -331,26 +344,55 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
 
     Future<bool> alive([int delayMs = 0]) async {
       if (delayMs > 0) await Future.delayed(Duration(milliseconds: delayMs));
+      // Check thêm _lock: nếu đang flip/match, bot chờ
       return token == _botGen && _turn == 1 && !_flying && !_lock && mounted;
     }
 
-    if (!await alive(520)) return;
+    // Chờ để chắc chắn flip/match hiện tại đã xong
+    if (!await alive(320)) return;
 
-    int? a = _chooseKnownSingle() ?? _chooseRandomFaceDown();
+    // Chiến lược bot Master:
+    // 1. Ưu tiên tìm cặp hoàn toàn (biết cả 2 tấm)
+    // 2. Nếu không, chỉ lật 1 tấm biết lẻ (để học thêm info)
+    // 3. Cuối cùng mới random
+
+    int? a = _chooseCompletePair();
+    if (a == null) a = _chooseKnownSingle();
+    if (a == null) a = _chooseRandomFaceDown();
     if (a == null) return;
     if (!await alive()) return;
     await _onTapBot(a);
 
-    if (!await alive(320)) return;
+    // Chờ trước lần pick thứ 2
+    if (!await alive(500)) return;
     int? b = _choosePairOf(a) ?? _chooseRandomFaceDown(except: a);
     if (b == null) return;
     if (!await alive()) return;
     await _onTapBot(b);
   }
 
+  // Chọn cặp hoàn toàn (bot đã thấy cả 2 tấm của cặp)
+  int? _chooseCompletePair() {
+    if (Random().nextDouble() > _cfg.botSmart) return null;
+    for (final e in _botSeen.entries) {
+      if (e.value.length >= 2) {
+        // Bot biết cặp này -> chọn tấm đầu tiên
+        final idx = e.value.first;
+        if (!_deck[idx].isRemoved &&
+            !_deck[idx].isMatched &&
+            !_deck[idx].isFaceUp) {
+          return idx;
+        }
+      }
+    }
+    return null;
+  }
+
   Future<void> _onTapBot(int i) async {
     HapticFeedback.selectionClick();
-    await _onTap(i);
+    // Bot should use the internal handler so it doesn't cancel its own
+    // queued actions by bumping _botGen.
+    await _onTapInternal(i);
   }
 
   int? _chooseRandomFaceDown({int? except}) {
@@ -368,7 +410,13 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
   int? _chooseKnownSingle() {
     if (Random().nextDouble() > _cfg.botSmart) return null;
     for (final e in _botSeen.entries) {
-      if (e.value.length == 1) return e.value.first;
+      if (e.value.length == 1) {
+        final idx = e.value.first;
+        if (!_deck[idx].isRemoved &&
+            !_deck[idx].isMatched &&
+            !_deck[idx].isFaceUp)
+          return idx;
+      }
     }
     return null;
   }
@@ -380,7 +428,10 @@ class _MemoryGameScreenState extends State<MemoryGameScreen>
     if (Random().nextDouble() > _cfg.botSmart) return null;
     if (seen.length >= 2) {
       final other = seen.firstWhere((x) => x != a, orElse: () => -1);
-      return (other >= 0 && !_deck[other].isMatched && !_deck[other].isRemoved)
+      return (other >= 0 &&
+              !_deck[other].isMatched &&
+              !_deck[other].isRemoved &&
+              !_deck[other].isFaceUp)
           ? other
           : null;
     }
