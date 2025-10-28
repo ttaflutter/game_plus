@@ -32,6 +32,7 @@ GamePlus bao gồm hai thành phần chính:
 ## ✨ Tính năng nổi bật
 
 ### 🔹 Frontend (Flutter UI)
+- 🎮 **Game Offline**
 - 🧩 **Game Caro Online** — Chơi real-time qua WebSocket
 - 🧑‍🤝‍🧑 **Phòng chơi & Chat trực tiếp**
 - 🥇 **Bảng xếp hạng toàn cầu**
@@ -134,16 +135,6 @@ WS_BASE_URL=ws://localhost:8000/ws
 
 ---
 
-## 💪 Hiệu năng
-
-| Tính năng | Tối ưu hóa | Kết quả |
-|------------|-------------|----------|
-| **Redis Caching** | Giảm 70% truy vấn DB | -70% queries |
-| **Parallel Broadcast** | Gửi WebSocket song song | -75% latency |
-| **Connection Pooling** | 20 kết nối DB đồng thời | +2x throughput |
-| **Multi-worker (uvloop)** | Auto-scale theo CPU | +3x performance |
-
----
 
 ## 🧪 Testing & Monitoring
 
@@ -165,9 +156,11 @@ WS_BASE_URL=ws://localhost:8000/ws
 ## 👥 Đội ngũ phát triển
 
 **D8Team — HUTECH University**  
-- 🧑‍💻 **Trần Tuấn Anh** — Lead Developer  
-- 🎨 **UI/UX & Frontend** — Flutter team  
-- ⚙️ **Backend & API** — FastAPI team  
+- 🧑‍💻 **Trần Tuấn Anh**
+- 🧑‍💻 **Trần Tấn Đạt**
+- 🎨 **Nguyễn Hữu Ngự Bình**
+- 🎨 **Trần Văn Bắc**
+- ⚙️ **Lê Văn Kiệt**
 
 ---
 
